@@ -45,10 +45,9 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
 
     reps = [
             ('insert'                  ,'self.insert'),
-            #('' ,'self.add_tabstop(\1,\4)'),
             ('line'                    ,'substr(line(sel))'),
             ('prev_word'               ,'substr(word(sel))'),
-            ('word\('                  , 'view.word('),
+            ('(?<!_)word\('            , 'view.word('),
             ('substr'                  , 'view.substr'),
             ('sel(?!f)'                , 'view.sel()[0]'),
             ('line'                    , 'view.line'),
@@ -66,22 +65,36 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         for t in self.tabstops:
             Tabstop.tabstops.append(self.view.find(t, start))
 
-    # def replace_all(self, text, list):
-    #     for i, j in list:
-    #         # text = text.replace(i, j)
-    #         text = re.sub(i, j, text)
-    #     return text
+    def replace_all(self, text, list):
+        for i, j in list:
+            text = re.sub(i, j, text)
+            print text
+        return text
 
     def insert(self, string):
         # self.view.insert(self.edit, self.view.sel()[0].b, string)
+        print 'string'+string
         self.final_snip += string
 
     def parse_snippet(self,contents):
-        # new_contents = self.replace_all(contents, self.reps)
-        new_contents = re.sub('(\$\{)([0-9]+)(:)(.+)(\})',self.add_tabstop, contents)
+        new_contents = self.replace_all(contents, self.reps)
+        new_contents = re.sub('(\$\{)([0-9]+)(:)([a-zA-Z0-9 \"\'"]+)(\})',self.add_tabstop, new_contents)
+        new_contents = re.split('(`)([a-zA-Z\s\'\"\(\).]+)(`)', new_contents)
 
-        self.final_snip += new_contents
-        # exec new_contents
+        # my execution loop: alternates between exec & adding to snippet :)
+        code = new_contents[0] == '`'
+        if code: start = 1
+        else:    start = 0
+
+        for c in new_contents[start::2]:
+            if code:
+                exec c
+            else:
+                self.final_snip += c
+            code = not code
+
+
+        # self.final_snip += new_contents
     
     def snippet_contents(self, trigger):
         package_dir = sublime.packages_path() + "/SMART_Snippets/"
@@ -89,6 +102,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         with open(snip_file, 'r') as f:
                     return f.read()
 
+    # method is deprecated, might go back to it if I want to change how the trigger is determined.
     def get_snippets(self):
         snippets = []
         package_dir = sublime.packages_path() + "/SMART_Snippets/"
@@ -98,9 +112,11 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
 
         return snippets
 
+    # gets the previous word
     def get_trigger(self):
         return self.view.substr(self.get_trigger_reg())
 
+    # returns the region of the previous word
     def get_trigger_reg(self):
         sel = self.view.sel()[0]
         return self.view.word(sel.a)

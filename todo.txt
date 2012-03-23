@@ -1,30 +1,40 @@
-- Tabstops
-  > replace \{.*\} with new region.  Have on_query_context check if has_next_smart_tabstop and bind tab to move to next tabstop. [COMPLETE]
+- Syntax definition for .smart_snippet
+
+- Snippet management
+  > create snippet from selection
+  > quickly edit most recent snippet
+  > delete snippet form qp
+  > organize snippet by scope
+
+- Smart snippets for making smart snippets :)
+
+- Tabstops [COMPLETE]
+  > replace \{.*\} with new region.  Have on_query_context check if has_next_smart_tabstop and bind tab to move to next tabstop. 
 
 - Quick for-loops
  *5 -> for x in xrange(1,5):
  
  - How I envision this working:
   > Replace -> run replacements to make the code valid & simple
-  		- Should be as simple as possible to get started
-  			- word => self.view.substr(self.view.word(self.view.sel()[0])
+        - Should be as simple as possible to get started
+            - word => self.view.substr(self.view.word(self.view.sel()[0])
   > Exec    -> execute the snippet's internal python
-  		- Syntax is still undecided.
-  			* How should code be wrapped?
+        - Syntax is still undecided.
+            * How should code be wrapped?
   > Insert  -> insert the actual snippet
   > Dynamic -> Have an on_modified listener for snippets that change dynamically?
-  		- Not completely thought out yet
+        - Not completely thought out yet
 
 - Support for multiple cursors? [probably not going to happen any time soon]
 
 Features I intent on implementing:
 - Quick and easy ascess to otherwise complicated features
-	- Create a simple syntax for adding to the quickpanel, autocompletion, inputpanel, mousemaps, and dialog boxes
-	- Allow for chaining (i.e. Having autocompletions specific to a tabstop for providing options)
-		- This would be especially useful for things such as (| = cursor):
-			- display: |  
-						 -------------
-			        	|   Block     |
-			        	|   Inline    |
-			        	|   None      |
-			        	 -------------
+    - Create a simple syntax for adding to the quickpanel, autocompletion, inputpanel, mousemaps, and dialog boxes
+    - Allow for chaining (i.e. Having autocompletions specific to a tabstop for providing options)
+        - This would be especially useful for things such as (| = cursor):
+            - display: |  
+                         -------------
+                        |   Block     |
+                        |   Inline    |
+                        |   None      |
+                         -------------
