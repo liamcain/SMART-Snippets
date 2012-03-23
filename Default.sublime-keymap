@@ -1,0 +1,24 @@
+[
+	{
+		"keys": ["tab"],
+		"command": "run_smart_snippet",
+		"context":
+		    [
+		        { "key": "smart_snippet_found",
+		        "operator": "equal", 
+		        "operand": true, 
+		        "match_all": true }
+		    ]
+	},
+	{
+		"keys": ["tab"],
+		"command": "next_smart_tabstop",
+		"context":
+		[
+			{ "key": "has_smart_tabstop",
+			 "operator": "equal",
+			 "operand": true,
+			 "match_all": true }
+		]
+	}
+]
