@@ -6,8 +6,7 @@ import re
 class SmartSnippetListener(sublime_plugin.EventListener):
 
     def has_tabstop(self, view):
-        snip = RunSmartSnippetCommand(view)
-        return bool(snip.tabstops)
+        return bool(view.get_regions('smart_snippets'))
 
     def prev_word_is_trigger(self, view):
         trigger = view.substr(view.word(view.sel()[0].a)).strip()
@@ -23,20 +22,17 @@ class SmartSnippetListener(sublime_plugin.EventListener):
 
 class NextSmartTabstopCommand(sublime_plugin.TextCommand):
     def run(self,edit):
-        snip = RunSmartSnippetCommand(self.view)
+        tabstops = self.view.get_regions('smart_snippets')
+        try:
+            next = tabstops.pop(1)
+        except IndexError:
+            next = tabstops.pop(0)
+        self.view.add_regions('smart_snippets', tabstops, 'comment')
         self.view.sel().clear()
-        self.view.sel().add(snip.next_tabstop(self.view))
+        self.view.sel().add(next)
 
 class RunSmartSnippetCommand(sublime_plugin.TextCommand):
-    something = 'hello'
-    cmds = {}
-    tabstops = []
-    tabstop_words = []
-
-    class defaults:
-        # view          = 'indexed here, but set in __new__'
-        tabstops        = []
-        iter            = 1
+    tabstop_words = []  # temporarily holds the words to be highlighted for tabstops
 
     reps = [
             ('insert'                  ,'self.insert'),
@@ -49,42 +45,25 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             ('view'                    , 'self.view')
             ]
 
-    def default_state(self):
-        self.__dict__.update(self.defaults.__dict__)
-
-    def __new__(cls, view):
-        cmds     = cls.cmds
-        vid      = view.id()
-        instance = cmds.get(vid)
-        if not vid in cmds:
-            instance = cmds[vid] = object.__new__(cls)
-            instance.default_state()
-            instance.view  = view
-
-        return instance
-
     def add_tabstop(self,matchobj):
         num = int(matchobj.group(2))
         text = matchobj.group(4)
         self.tabstop_words.insert(num, text)
-        # self.final_snip += text
         return text
 
     def generate_tabstops(self, start):
+        tabstops = []
         for t in self.tabstop_words:
-            self.tabstops.append(self.view.find(t, start))
-        print self.tabstops
-        self.view.add_regions('smart_snippets',self.tabstops, "comment")
+            tabstops.append(self.view.find(t, start))
+
+        self.view.add_regions('smart_snippets', tabstops, "comment")
 
     def replace_all(self, text, list):
         for i, j in list:
             text = re.sub(i, j, text)
-            # print text
         return text
 
     def insert(self, string):
-        # self.view.insert(self.edit, self.view.sel()[0].b, string)
-        # print 'string'+string
         self.final_snip += string
 
     def parse_snippet(self,contents):
@@ -110,16 +89,6 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         with open(snip_file, 'r') as f:
                     return f.read()
 
-    # method is deprecated, might go back to it if I want to change how the trigger is determined.
-    def get_snippets(self):
-        snippets = []
-        package_dir = sublime.packages_path() + "/SMART_Snippets/"
-        for d in os.listdir(package_dir):
-            if '.smart_snippet' in d:
-                snippets.append(d)
-
-        return snippets
-
     # gets the previous word
     def get_trigger(self):
         return self.view.substr(self.get_trigger_reg())
@@ -129,17 +98,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         sel = self.view.sel()[0]
         return self.view.word(sel.a)
 
-    def next_tabstop(self,view):
-        try:
-            stop = self.tabstops[self.iter]
-        except IndexError:
-            stop = self.tabstops[0]
-
-        self.iter+=1
-        return stop
-
     def run(self, edit):
-        self.edit = edit
         view = self.view
         sel = view.sel()[0]
         start_pos = sel.a - len(view.substr(view.word(sel)))
@@ -148,9 +107,8 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         trig = self.get_trigger()
         snippet = self.snippet_contents(trig)
         self.parse_snippet(snippet)
-        self.view.replace(edit, reg, self.final_snip)
+        view.replace(edit, reg, self.final_snip)
         self.generate_tabstops(start_pos)
+        self.tabstop_words = []
         if view.get_regions('smart_snippets'):
-            self.view.sel().clear()
-            next_pos = self.next_tabstop(view)
-            self.view.sel().add(next_pos)
+            self.view.run_command("next_smart_tabstop")
