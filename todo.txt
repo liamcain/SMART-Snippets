@@ -1,5 +1,10 @@
 - Syntax definition for .smart_snippet
 
+- Scope
+  > ##scope: _____________
+  > multiple snippets, same name, dif scope [ISSUE!]
+  > When creating scope by selection, give dropdown of the current scope, ordered by least to most specific
+
 - Snippet management
   > create snippet from selection
   > quickly edit most recent snippet
