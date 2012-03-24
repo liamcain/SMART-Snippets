@@ -5,9 +5,9 @@ import re
 
 class SmartSnippetListener(sublime_plugin.EventListener):
 
-    def has_tabstop(self):
-        print RunSmartSnippetCommand.tabstops
-        return bool(RunSmartSnippetCommand.tabstops)
+    def has_tabstop(self, view):
+        snip = RunSmartSnippetCommand(view)
+        return bool(snip.tabstops)
 
     def prev_word_is_trigger(self, view):
         trigger = view.substr(view.word(view.sel()[0].a)).strip()
@@ -18,13 +18,14 @@ class SmartSnippetListener(sublime_plugin.EventListener):
         if key == "smart_snippet_found":
             return self.prev_word_is_trigger(view) == operand
         if key == "has_smart_tabstop":
-            return self.has_tabstop() == operand
+            return self.has_tabstop(view) == operand
 
 
 class NextSmartTabstopCommand(sublime_plugin.TextCommand):
     def run(self,edit):
+        snip = RunSmartSnippetCommand(self.view)
         self.view.sel().clear()
-        self.view.sel().add(Tabstop.next_tabstop())
+        self.view.sel().add(snip.next_tabstop(self.view))
 
 class RunSmartSnippetCommand(sublime_plugin.TextCommand):
     something = 'hello'
