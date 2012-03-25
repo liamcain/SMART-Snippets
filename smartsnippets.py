@@ -45,16 +45,14 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             ('view'                    , 'self.view')
             ]
 
-    def add_tabstop(self,matchobj):
-        num = int(matchobj.group(2))
-        text = matchobj.group(4)
-        self.tabstop_words.insert(num, text)
-        return text
-
-    def generate_tabstops(self, start):
+    def generate_tabstops(self, edit, start, tabstop_matches):
         tabstops = []
-        for t in self.tabstop_words:
-            tabstops.append(self.view.find(t, start))
+        for t in tabstop_matches:
+            full_ts_region = self.view.find(re.escape(t.group(0)),start)
+            pos = full_ts_region.a
+            ts_region = sublime.Region(pos, pos + len(t.group(4)))
+            tabstops.insert(int(t.group(2)), ts_region)
+            self.view.replace(edit,full_ts_region,t.group(4))
 
         self.view.add_regions('smart_snippets', tabstops, "comment")
 
@@ -68,7 +66,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
 
     def parse_snippet(self,contents):
         new_contents = self.replace_all(contents, self.reps)
-        new_contents = re.sub('(\$\{)([0-9]+)(:)([a-zA-Z0-9 \"\'"]+)(\})',self.add_tabstop, new_contents)
+        tabstops = re.finditer('(\$\{)([0-9]+)(:)([a-zA-Z0-9 \"\']+)(\})', contents)
         new_contents = re.split('(`)([a-zA-Z\s\'\"\(\).]+)(`)', new_contents)
 
         # my execution loop: alternates between exec & adding to snippet :)
@@ -82,6 +80,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             else:
                 self.final_snip += c
             code = not code
+        return tabstops
     
     def snippet_contents(self, trigger):
         package_dir = sublime.packages_path() + "/SMART_Snippets/"
@@ -106,9 +105,9 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         reg = self.get_trigger_reg()
         trig = self.get_trigger()
         snippet = self.snippet_contents(trig)
-        self.parse_snippet(snippet)
+        tabstops = self.parse_snippet(snippet)
         view.replace(edit, reg, self.final_snip)
-        self.generate_tabstops(start_pos)
+        self.generate_tabstops(edit,start_pos, tabstops)
         self.tabstop_words = []
         if view.get_regions('smart_snippets'):
             self.view.run_command("next_smart_tabstop")
