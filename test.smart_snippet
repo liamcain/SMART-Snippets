@@ -1,4 +1,4 @@
-Hello ${0:Hello}, ${1:World}
+Hello ${0:Hello}, ${1:World} `insert(line)`
 
 SMART Snippets allow for Python inside your snippets
 
