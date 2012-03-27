@@ -1,8 +1,13 @@
 - Syntax definition for .smart_snippet
 
-- Scope
+- Snippets should be able to use the current selection/buffer
+
+- Allow for AC in tabstops... Recursion
+  > http://stackoverflow.com/questions/524548/regular-expression-to-detect-semi-colon-terminated-c-for-while-loops/524624#524624
+
+- Scope [COMPLETE]
   > ##scope: _____________
-  > multiple snippets, same name, dif scope [ISSUE!]
+  > multiple snippets, same name, dif scope
   > When creating scope by selection, give dropdown of the current scope, ordered by least to most specific
 
 - Snippet management
@@ -10,6 +15,9 @@
   > quickly edit most recent snippet
   > delete snippet form qp
   > organize snippet by scope
+
+- Autocompletion
+  > AC{[1-9]:____,_____,____,_____}
 
 - Smart snippets for making smart snippets :)
 

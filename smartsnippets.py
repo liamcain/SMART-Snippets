@@ -33,6 +33,17 @@ class SmartSnippetListener(sublime_plugin.EventListener):
         if key == "has_smart_tabstop":
             return self.has_tabstop(view) == operand
 
+    def on_query_completions(self, view, prefix, locations):
+        sel = view.sel()[0].a
+        for r in view.get_regions('smart_completions'):
+            if r.contains(sel):
+                ac = RunSmartSnippetCommand.global_autocompletions
+                for i,c in enumerate(ac):
+                    if c[0] == view.id():
+                        things = [(x,x) for x in ac[i][1].split(',')]
+                        print things
+                        return things
+                        # return [x for x in ac.pop(i)[1].split(',')]
 
 class NextSmartTabstopCommand(sublime_plugin.TextCommand):
     def run(self,edit):
@@ -46,6 +57,7 @@ class NextSmartTabstopCommand(sublime_plugin.TextCommand):
         self.view.sel().add(next)
 
 class RunSmartSnippetCommand(sublime_plugin.TextCommand):
+    global_autocompletions = []
     final_snip = ''
 
     reps = [
@@ -59,16 +71,28 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             ('view'                    , 'self.view')
             ]
 
-    def generate_tabstops(self, edit, start, tabstop_matches):
-        tabstops = []
-        for t in tabstop_matches:
-            full_ts_region = self.view.find(re.escape(t.group(0)),start)
-            pos = full_ts_region.a
-            ts_region = sublime.Region(pos, pos + len(t.group(4)))
-            tabstops.insert(int(t.group(2)), ts_region)
-            self.view.replace(edit,full_ts_region,t.group(4))
+    def generate_completions(self, edit, start, matches):
+        regions = []
+        for m in matches:
+            full_region = self.view.find(re.escape(m.group(0)),start)
+            pos = full_region.a
+            active_region = sublime.Region(pos, pos + len(m.group(2)))
+            regions.append(active_region)
+            self.global_autocompletions.append((self.view.id(),m.group(4)))
+            self.view.replace(edit,full_region,m.group(2))
 
-        self.view.add_regions('smart_snippets', tabstops, "comment")
+        self.view.add_regions('smart_completions', regions, "comment")
+
+    def generate_tabstops(self, edit, start, matches):
+        regions = []
+        for m in matches:
+            full_region = self.view.find(re.escape(m.group(0)),start)
+            pos = full_region.a
+            active_region = sublime.Region(pos, pos + len(m.group(4)))
+            regions.insert(int(m.group(2)), active_region)
+            self.view.replace(edit,full_region,m.group(4))
+
+        self.view.add_regions('smart_snippets', regions, "comment")
 
     def replace_all(self, text, list):
         for i, j in list:
@@ -94,7 +118,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
 
         new_contents = self.replace_all(new_contents, self.reps)
         tabstops = re.finditer('(\$\{)([0-9]+)(:)([a-zA-Z0-9 \"\']+)(\})', new_contents)
-        auto_completions = re.finditer('(\$\{)(AC[0-9]+)(:)([a-zA-Z0-9 \"\']+)(\})', new_contents)
+        auto_completions = re.finditer('(AC\{)([a-zA-Z0-9\s]+)(:)([a-zA-Z0-9 \"\',]+)(\})', new_contents)
         new_contents = re.split('(`)([a-zA-Z0-9\s\'\"\(\)\[\].]+)(`)', new_contents)
         # my execution loop: alternates between exec & adding to snippet :)
         code = new_contents[0] == '`'
@@ -139,6 +163,8 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
 
         if tabstops:
             self.generate_tabstops(edit, start_pos, tabstops)
+        if auto_completions:
+            self.generate_completions(edit, start_pos, auto_completions)
 
         if view.get_regions('smart_snippets'):
             self.view.run_command("next_smart_tabstop")
