@@ -8,10 +8,24 @@ class SmartSnippetListener(sublime_plugin.EventListener):
     def has_tabstop(self, view):
         return bool(view.get_regions('smart_snippets'))
 
+    def match_scope(self, view, snip_file):
+        scope = view.scope_name(view.sel()[0].a)
+        has_scope = True
+        f = open(snip_file, 'r')
+        for line in f:
+            if line.startswith('###scope'):
+                has_no_scope = False
+                param, snip_scope = line.split(":",1)
+                if snip_scope.strip() in scope:
+                    f.close()
+                    return True
+        f.close()
+        return has_no_scope
+
     def prev_word_is_trigger(self, view):
         trigger = view.substr(view.word(view.sel()[0].a)).strip()
         snip_file = sublime.packages_path() + "/SMART_Snippets/" + trigger + ".smart_snippet"
-        return os.path.isfile(snip_file)
+        return os.path.isfile(snip_file) and self.match_scope(view, snip_file)
 
     def on_query_context(self, view, key, operator, operand, match_all):
         if key == "smart_snippet_found":
@@ -64,9 +78,22 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
     def insert(self, string):
         self.final_snip += string
 
-    def parse_snippet(self,contents):
-        new_contents = self.replace_all(contents, self.reps)
-        tabstops = re.finditer('(\$\{)([0-9]+)(:)([a-zA-Z0-9 \"\']+)(\})', contents)
+    def matches_scope(self, line, scope):
+        param, snip_scope = line.split(":",1)
+        return snip_scope.strip() in scope
+
+    def parse_snippet(self,contents, scope):
+        is_valid_scope = False
+        new_contents = ''
+
+        for line in contents.split('\n'):
+            if '###scope' in line:
+                is_valid_scope = self.matches_scope(line,scope)
+            elif is_valid_scope:
+                new_contents += line
+
+        new_contents = self.replace_all(new_contents, self.reps)
+        tabstops = re.finditer('(\$\{)([0-9]+)(:)([a-zA-Z0-9 \"\']+)(\})', new_contents)
         new_contents = re.split('(`)([a-zA-Z0-9\s\'\"\(\)\[\].]+)(`)', new_contents)
         # my execution loop: alternates between exec & adding to snippet :)
         code = new_contents[0] == '`'
@@ -86,7 +113,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         package_dir = sublime.packages_path() + "/SMART_Snippets/"
         snip_file = package_dir + trigger + ".smart_snippet"
         with open(snip_file, 'r') as f:
-                    return f.read()
+            return f.read()
 
     # gets the previous word
     def get_trigger(self):
@@ -100,13 +127,15 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         view      = self.view
         sel       = view.sel()[0]
+        scope     = view.scope_name(sel.a)
         start_pos = view.word(sel).begin()
         reg       = self.get_trigger_reg()
-        snippet   = self.snippet_contents(trig)
-        tabstops  = self.parse_snippet(snippet)
+        snippet   = self.snippet_contents()
+        tabstops  = self.parse_snippet(snippet, scope)
 
         view.replace(edit, reg, self.final_snip)
-        self.generate_tabstops(edit, start_pos, tabstops)
+        if tabstops:
+            self.generate_tabstops(edit, start_pos, tabstops)
 
         if view.get_regions('smart_snippets'):
             self.view.run_command("next_smart_tabstop")

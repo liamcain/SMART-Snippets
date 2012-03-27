@@ -1,3 +1,4 @@
+###scope:text.html
 Hello ${0:Hello}, ${1:World} `insert(line)`
 
 SMART Snippets allow for Python inside your snippets
@@ -5,3 +6,5 @@ SMART Snippets allow for Python inside your snippets
 There is still much to do
 
 First, I need to `insert('add')` scopes for the plugin.
+###scope:source.python
+Something Else
