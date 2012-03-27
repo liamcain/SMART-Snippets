@@ -86,7 +86,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         is_valid_scope = False
         new_contents = ''
 
-        for line in contents.split('\n'):
+        for line in contents.splitlines(True):
             if '###scope' in line:
                 is_valid_scope = self.matches_scope(line,scope)
             elif is_valid_scope:
@@ -94,6 +94,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
 
         new_contents = self.replace_all(new_contents, self.reps)
         tabstops = re.finditer('(\$\{)([0-9]+)(:)([a-zA-Z0-9 \"\']+)(\})', new_contents)
+        auto_completions = re.finditer('(\$\{)(AC[0-9]+)(:)([a-zA-Z0-9 \"\']+)(\})', new_contents)
         new_contents = re.split('(`)([a-zA-Z0-9\s\'\"\(\)\[\].]+)(`)', new_contents)
         # my execution loop: alternates between exec & adding to snippet :)
         code = new_contents[0] == '`'
@@ -106,7 +107,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             else:
                 self.final_snip += c
             code = not code
-        return tabstops
+        return [tabstops, auto_completions]
     
     def snippet_contents(self):
         trigger = self.get_trigger()
@@ -131,9 +132,11 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         start_pos = view.word(sel).begin()
         reg       = self.get_trigger_reg()
         snippet   = self.snippet_contents()
-        tabstops  = self.parse_snippet(snippet, scope)
+        tabstops, auto_completions  = self.parse_snippet(snippet, scope)
 
         view.replace(edit, reg, self.final_snip)
+        del self.final_snip
+
         if tabstops:
             self.generate_tabstops(edit, start_pos, tabstops)
 
