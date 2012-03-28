@@ -10,7 +10,7 @@ class SmartSnippetListener(sublime_plugin.EventListener):
 
     def match_scope(self, view, snip_file):
         scope = view.scope_name(view.sel()[0].a)
-        has_scope = True
+        has_no_scope = True
         f = open(snip_file, 'r')
         for line in f:
             if line.startswith('###scope'):
@@ -40,10 +40,7 @@ class SmartSnippetListener(sublime_plugin.EventListener):
                 ac = RunSmartSnippetCommand.global_autocompletions
                 for i,c in enumerate(ac):
                     if c[0] == view.id():
-                        things = [(x,x) for x in ac[i][1].split(',')]
-                        print things
-                        return things
-                        # return [x for x in ac.pop(i)[1].split(',')]
+                        return [(x,x) for x in ac[i][1].split(',')]
 
 class NextSmartTabstopCommand(sublime_plugin.TextCommand):
     def run(self,edit):
@@ -117,8 +114,8 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
                 new_contents += line
 
         new_contents = self.replace_all(new_contents, self.reps)
-        tabstops = re.finditer('(\$\{)([0-9]+)(:)([a-zA-Z0-9 \"\']+)(\})', new_contents)
-        auto_completions = re.finditer('(AC\{)([a-zA-Z0-9\s]+)(:)([a-zA-Z0-9 \"\',]+)(\})', new_contents)
+        tabstops = re.finditer('(\$\{)([0-9]+)(:)([a-zA-Z0-9\s\[\]:,\"\']+)(\})', new_contents)
+        auto_completions = re.finditer('(AC\[)([a-zA-Z0-9\s]+)(:)([a-zA-Z0-9 \"\',]+)(\])', new_contents)
         new_contents = re.split('(`)([a-zA-Z0-9\s\'\"\(\)\[\].]+)(`)', new_contents)
         # my execution loop: alternates between exec & adding to snippet :)
         code = new_contents[0] == '`'
