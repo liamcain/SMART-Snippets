@@ -1,5 +1,5 @@
 ###scope:text.plain
-Hello ${0:Hello}, ${1:AC[a:word,nextword,anotherword]} `insert(line)`
+Hello ${0:Hello}, ${1:AC{a:word,nextword, anotherword}} `insert(line)`
 
 SMART Snippets allow for Python inside your snippets.
 

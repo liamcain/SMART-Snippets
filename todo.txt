@@ -2,9 +2,6 @@
 
 - Snippets should be able to use the current selection/buffer
 
-- Allow for AC in tabstops... Recursion
-  > http://stackoverflow.com/questions/524548/regular-expression-to-detect-semi-colon-terminated-c-for-while-loops/524624#524624
-
 - Scope [COMPLETE]
   > ##scope: _____________
   > multiple snippets, same name, dif scope
@@ -16,7 +13,7 @@
   > delete snippet form qp
   > organize snippet by scope
 
-- Autocompletion
+- Autocompletion [Buggy]
   > AC{[1-9]:____,_____,____,_____}
 
 - Smart snippets for making smart snippets :)
@@ -43,8 +40,8 @@
 Features I intent on implementing:
 - Quick and easy ascess to otherwise complicated features
     - Create a simple syntax for adding to the quickpanel, autocompletion, inputpanel, mousemaps, and dialog boxes
-    - Allow for chaining (i.e. Having autocompletions specific to a tabstop for providing options)
-        - This would be especially useful for things such as (| = cursor):
+    - Allow for chaining (i.e. Having autocompletions specific to a tabstop for providing options) [Got some issues]
+        - This would be especially useful for things such as (| = cursor): [COMPLETE]
             - display: |  
                          -------------
                         |   Block     |
