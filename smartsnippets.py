@@ -142,12 +142,12 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
                 end = word[4:].find('}')+4
             else:
                 start = word.find(':')+1
-                end = word.find('}')-1
+                end = word.find('}')
             return word[start:end]
         else:
-            start = word.find('{')
+            start = word.find('{')+1
             end = word.find(':')
-            return word[start,end]
+            return word[start:end]
 
     def parse_snippet(self,edit,contents,scope):
         is_valid_scope = False
@@ -162,17 +162,8 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             elif is_valid_scope:
                 new_contents += line
 
-
-        # *NEEDS TO BE FIXED*
-        # the regex works as intended; however, because it uses re.split, 
-        # all capture groups are added to the list,
-        # even those I don't want.  I tried solving this with noncapture groups to no avail
-        # Also, for some reason, the snippet is not splitting at AC{text:sometext,moretext,evenmoretext}
-        new_contents = re.split(r'((?:\$|ac|qp)\{[\w,:\s]+?(?:(?=\{)[\w:,\{]+\}|[\w:,\s]+)\s*\})|(`.*`)',new_contents)
-        print new_contents
-
         self.edit = edit
-        for word in [x for x in new_contents if x != None]:
+        for word in re.split(r'((?:\$|AC|QP)\{[\w,:\s]+?(?:(?=\{)[\w:,\{]+\}|[\w:,\s]+)\s*\}|`.*`)',new_contents):  
             if word.startswith(('$','AC','QP')):
                 visible_word = self.get_vis(word)
             elif word.startswith('`'):
