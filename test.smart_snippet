@@ -1,10 +1,4 @@
 ###scope:text.plain
-Hello ${0:Hello}, ${1:AC{a:word,nextword, anotherword}} `insert(line)`
-
-SMART Snippets allow for Python inside your snippets.
-
-There is still much to do.
-
+Hello ${0:Hellozzz}, ${1:AC{a:word,nextword,anotherword} } } `insert('hi')`
+SMART Snippets allow for Python inside your snippets. AC{auto:first,second,third} There is still much to do.
 First, I need to `insert('add')` scopes for the plugin.
-###scope:source.python
-Something Else AC{AUTOCOMPLETE:first,second,third}
