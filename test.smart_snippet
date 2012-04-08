@@ -1,4 +1,3 @@
 ###scope:text.plain
-Hello ${0:Hellozzz}, ${1:AC{a:word,nextword,anotherword} } } `insert('hi')`
+Hello ${0:World}, ${1:AC{a:word,nextword,anotherword} } } `insert('(...inserted with python...)')`
 SMART Snippets allow for Python inside your snippets. AC{auto:first,second,third} There is still much to do.
-First, I need to `insert('add')` scopes for the plugin.
