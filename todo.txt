@@ -3,7 +3,11 @@
 - Add more to code shorthand
   > access to the clipboard
 
-- Snippets should be able to use the current selection/buffer
+- Tabstops/AC/QP
+  > Fix the regions issue.  When one region changes, it causes problems.  Perhaps, to get rid of this problem, once again change the structure of the global_*
+    - use a list of regions.  Then use the index to coorespond to the region in get_regions.  That way, when the view region changes, the global_* regions will stay intact.
+  > Diff color for qs/ac/ts
+  > Status bar info.  Where is the cursor in the snippet, what will happen next...
 
 - Scope [COMPLETE]
   > ##scope: _____________
