@@ -1,15 +1,23 @@
-- Syntax definition for .smart_snippet (tmlanguage)
+TODO
+====
+These are some of my plans and ideas that have sprouted in my head during development.  Most of it is nonsense that only I can decipher.
+
+[COMPLETE] Syntax definition for .smart_snippet (tmlanguage)
+   > Thanks Facelessuser!
+
 - Smart snippets for making smart snippets
+
 - Add more to code shorthand
   > access to the clipboard
 
-- Tabstops/AC/QP
-  > Fix the regions issue.  When one region changes, it causes problems.  Perhaps, to get rid of this problem, once again change the structure of the global_*
-    - use a list of regions.  Then use the index to coorespond to the region in get_regions.  That way, when the view region changes, the global_* regions will stay intact.
+[70% Complete] Tabstops/AC/QP
+  > Fix the regions issue.  When one region changes, it causes problems.  Perhaps, to get rid of this problem, once again change the structure of the global_* [FIXED]
   > Diff color for qs/ac/ts
   > Status bar info.  Where is the cursor in the snippet, what will happen next...
+  > Recursive
+     - Allow for snippets within snippets.
 
-- Scope [COMPLETE]
+[COMPLETE] Scope
   > ##scope: _____________
   > multiple snippets, same name, dif scope
   > When creating scope by selection, give dropdown of the current scope, ordered by least to most specific
@@ -20,5 +28,15 @@
   > delete snippet form qp
   > organize snippet by scope
 
-- AC and QP:
-  > for AC I have a dict within a dict.  For some reason, I cannot use an object as a key.  .get(obj) doesn't match...
+[Complete] AC and QP
+
+#Some new ideas --
+- Put more of the API in the hands of the user
+- make '###' into a comment for smart snippets
+- provide an optional '###trigger' field for snippets
+    > This would allow for symbols as triggers (eg. # or $)
+    > Potentially allow for regex-matching triggers
+    > Possible have triggers that trigger without tab?
+
+# The Future
+- Inspired by concepts such as Light Table, I hope to see SMART Snippets providing for a more dynamic coding experience.  For example, as the user changes sections of code, the snippets could change dynamically.  Sublime Text and its API has so much to offer.  SMART Snippets is my attempt at getting all the power into the hands of the user.

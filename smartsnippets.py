@@ -76,10 +76,11 @@ class SmartSnippetListener(sublime_plugin.EventListener):
         sel = view.sel()[0]
         regions = view.get_regions('smart_completions')
         for i,r in enumerate(regions):
-            if r.contains(sel.a):
-                edit = view.begin_edit()
-                # view.erase(edit, view.word(sel))
-                view.end_edit(edit)
+            if r.contains(sel):
+                if r == sel:
+                    edit = view.begin_edit()
+                    view.erase(edit, r)
+                    view.end_edit(edit)
                 ac = RunSmartSnippetCommand.global_autocompletions.get(view.id())[i]
                 return [(x,x) for x in ac]
 
