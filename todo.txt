@@ -30,9 +30,18 @@ These are some of my plans and ideas that have sprouted in my head during develo
 
 [Complete] AC and QP
 
+Changes in tmLanguage:
+- Code should have a background?
+- Code is now ``` instead of `
+- ### is now comments
+- Change scopes around so that python code can go within regions
+
 #Some new ideas --
 - Put more of the API in the hands of the user
-- make '###' into a comment for smart snippets
+- Allow python within regions (ts, qp, ac...) [CHECK!]
+ > You can have variables that span across code regions
+ > You can import your own modules.
+- make '###' into a comment for smart snippets [CHECK!]
 - provide an optional '###trigger' field for snippets
     > This would allow for symbols as triggers (eg. # or $)
     > Potentially allow for regex-matching triggers

@@ -9,7 +9,6 @@ class SmartSnippetListener(sublime_plugin.EventListener):
         self.view = view
 
     def has_tabstop(self, view):
-        # return bool(view.get_regions('smart_tabstops'))
         return bool(RunSmartSnippetCommand.global_ts_order.get(view.id()))
 
     def replace(self, item):
@@ -49,7 +48,6 @@ class SmartSnippetListener(sublime_plugin.EventListener):
     # For checking if the cursor selection overlaps with a QP region
     def on_selection_modified(self, view):
         sel = view.sel()[0]
-        # print view.substr(sel.a-1)
         regions = view.get_regions('quick_completions')
         for i,r in enumerate(regions[:]):
             if r.empty() and not ' ' in view.substr(sel.a-1):
@@ -110,7 +108,8 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
     # This is a working list of substitutions for embedded code.
     # It will serve as shorthand for people who want quick access to common python functions and commands
     reps = [
-            ('insert\('                 ,'self.insert(edit,'),
+            # ('([\w]+)\s*='             , 'global \\1\n\\1 ='),
+            ('insert\('                ,'self.insert(edit,'),
             ('\%line\%'                ,'substr(line(sel))'),
             ('%prev_word%'             ,'substr(word(sel))'),
             ('(?<!_)word\('            , 'view.word('),
@@ -126,6 +125,9 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         return text
 
     def insert(self, edit, string):
+        if self.code_in_snip[0]:
+            self.code_in_snip[1] = string
+            return
         self.view.insert(edit, self.pos, string)
         self.pos += len(string)
 
@@ -135,9 +137,9 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
 
     # replace the shorthand code with the reps,
     # then exec the code segment
-    def run_code(self,edit,string):
-        new_string = self.replace_all(string, self.reps)
-        exec new_string[1:-1]  # 1:-1 removes the ` around the code
+    # def run_code(self, edit, string):
+    #     new_string = self.replace_all(string, self.reps)
+    #     exec new_string[3:-3]
 
     # used to parse snippets to extract the string that will be printed out
     # ex. ${0:snippet}
@@ -145,8 +147,9 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
     # The method finds the word snippet and returns it to be inserted into the view
     def get_vis(self, word):
         if word.startswith('$'):
-            if ':' in word[4:]:  # means there is an overlapping region.
-                start = word[4:].find('{')+5
+            overlap = word[4:].find('{')
+            if overlap > 0 and not '\\' in word[overlap:overlap+1]: # means there is an overlapping region.
+                start = overlap + 5
                 end = word[4:].find(':')+4
                 other_end = word.find('}')
                 new_word = word[start:end]
@@ -187,27 +190,35 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         view = self.view
         is_valid_scope = False
         new_contents = ''
+        self.code_in_snip = [False,'']
         self.pos = self.get_trigger_reg().a
         view.erase(edit, self.get_trigger_reg())
 
         # Divides the string so that only code with a matching scope will be inserted
         for line in contents.splitlines(True):
-            if '###scope' in line:
-                is_valid_scope = self.matches_scope(line,scope)
+            if line.startswith('###'):
+                if line.startswith('###scope:'):
+                    is_valid_scope = self.matches_scope(line,scope)
             elif is_valid_scope:
                 new_contents += line
 
-        for word in re.split(r'((?:\$|AC|QP)\{[\w,:\s]+?(?:(?=\{)[\w\s:,\{]+\}|[\w:,\s]+)\s*\}|`.*`)',new_contents):  
+        for word in re.split(r'((?:\$|AC|QP)\{[^\{]+?(?:(?=\{)[\w\s:,\{]+\}|[^\}]+)\s*\}|```[^`]+```)',new_contents):
             if word.startswith(('$','AC','QP')):
+                for code in re.findall('```[^`]+```', word, flags=re.DOTALL):
+                    self.code_in_snip[0] = True
+                    exec self.replace_all(code, self.reps)[3:-3]
+                    word = word.replace(code,str(self.code_in_snip[1]))
                 visible_word = self.get_vis(word)
-            elif word.startswith('`'):
-                self.run_code(edit, word)
+            elif word.startswith('```'):
+                exec self.replace_all(word, self.reps)[3:-3]
                 visible_word = ''
             else:
                 visible_word = word
 
             view.insert(edit,self.pos,visible_word)
             self.pos += len(visible_word)
+            view.sel().clear()
+            view.sel().add(sublime.Region(self.pos,self.pos))
 
         stop_regions = [x[0] for x in self.temp_tabstops]
         self.global_ts_order[view.id()] = [x[1] for x in self.temp_tabstops]
