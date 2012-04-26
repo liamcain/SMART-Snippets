@@ -1,5 +1,5 @@
 ###this is a comment
 ###scope:source.smart_snippet
-```import random; self.pos -= 1```
+```import random```
 ${1:###scope:}${2:text.html}
-${```insert(3)```:QP{something:one,two,```insert(random.random())```}}
+${3:}

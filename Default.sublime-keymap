@@ -1,6 +1,20 @@
 [
 	{
 		"keys": ["tab"],
+		"command": "next_smart_tabstop",
+		"context":
+		[
+			{ "key": "has_smart_tabstop",
+			 "operator": "equal",
+			 "operand": true,
+			 "match_all": true },
+			 { "key": "auto_complete_visible", 
+			 "operator": "equal", 
+			 "operand": false }
+		]
+	},
+	{
+		"keys": ["tab"],
 		"command": "run_smart_snippet",
 		"context":
 		    [
@@ -13,18 +27,26 @@
 		        "operand": false }
 		    ]
 	},
+	{ "keys": ["$"], 
+	"command": "insert_snippet", 
+	"args": {"contents": "\\$\\{${1:1}:${2:placeholder}\\}"}, 
+	"context":
+			[
+				{ "operand": "source.smart_snippet",
+		          "operator": "equal", 
+			      "match_all": true, 
+		          "key": "selector" }
+			]
+	},
 	{
-		"keys": ["tab"],
-		"command": "next_smart_tabstop",
+		"keys": ["super+d"],
+		"command": "expand_selection_to_qc_region",
 		"context":
 		[
-			{ "key": "has_smart_tabstop",
+			{ "key": "inside_qc_region",
 			 "operator": "equal",
 			 "operand": true,
-			 "match_all": true },
-			 { "key": "auto_complete_visible", 
-			 "operator": "equal", 
-			 "operand": false }
+			 "match_all": true }
 		]
 	}
 ]
