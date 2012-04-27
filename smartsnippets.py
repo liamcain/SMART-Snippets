@@ -67,7 +67,6 @@ class SmartSnippetListener(sublime_plugin.EventListener):
             if r.empty() and not ' ' in view.substr(sel.a-1):
                 regions.remove(r)
                 qp = RunSmartSnippetCommand.global_quickcompletions.get(view.id()).pop(i)
-
         for i,r in enumerate(regions):
             if sel == r:
                 self.i = i
@@ -75,6 +74,17 @@ class SmartSnippetListener(sublime_plugin.EventListener):
                 view.window().show_quick_panel(qp, self.replace)
         
         view.add_regions('quick_completions', regions, 'comment')
+
+    def on_modified(self, view):
+        sel = view.sel()[0]
+        regions = view.get_regions('smart_tabstops')
+        print regions
+        for i,r in enumerate(regions[:]):
+            if sel.intersects(r):
+                regions.remove(r)
+                RunSmartSnippetCommand.global_ts_order[view.id()].pop(i)
+        view.add_regions('smart_tabstops', regions, 'comment')
+
 
     # adds a context for 'tab' in the keybindings
     def on_query_context(self, view, key, operator, operand, match_all):
@@ -106,7 +116,7 @@ class NextSmartTabstopCommand(sublime_plugin.TextCommand):
         tabstops = self.view.get_regions('smart_tabstops')
         print RunSmartSnippetCommand.global_ts_order.get(view.id())
         ts_order = RunSmartSnippetCommand.global_ts_order.get(view.id())
-        next = tabstops.pop(ts_order.index(min(ts_order)))
+        next = tabstops.pop(ts_order.index(min(ts_order)))  # pops the next lowest value
         RunSmartSnippetCommand.global_ts_order[view.id()].remove(min(ts_order))
         view.add_regions('smart_tabstops', tabstops, 'comment')
         view.sel().clear()
@@ -179,7 +189,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
                 end = word[4:].find(':')+4
                 other_end = word.find('}')
                 new_word = word[start:end]
-                r = sublime.Region(self.pos,self.pos+len(new_word)) #added -1
+                r = sublime.Region(self.pos,self.pos+len(new_word))
                 rlist = word[end+1:other_end]
                 if word.startswith('AC'):
                     self.ac_regions.append(r)
@@ -229,7 +239,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             elif is_valid_scope:
                 new_contents += line
 
-        for word in re.split(r'((?:\$|AC|QP)\{[^\{]+?(?:(?=\{)[\w\s:,\{]+\}|[^\}]+)\s*\}|```[^`]+```)',new_contents):
+        for word in re.split(r'((?:\$|AC|QP)\{[\w,:\s]+?(?:(?=\{)[\w\s:,\{]+\}|[\w:,\s]+)\s*\}|```[^`]+```)',new_contents):
             if word.startswith(('$','AC','QP')):
                 for code in re.findall('```[^`]+```', word, flags=re.DOTALL):
                     self.code_in_snip[0] = True
@@ -263,7 +273,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         view.add_regions('quick_completions', self.qc_regions, 'comment')
         del self.temp_tabstops[:]
         # del self.ac_regions[:]
-        # del self.qc_regions[:]
+        del self.qc_regions[:]
     
     def snippet_contents(self):
         trigger = self.get_trigger()
