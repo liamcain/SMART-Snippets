@@ -3,8 +3,11 @@ import sublime_plugin
 import os.path
 import re
 
+class SSnip(object):
+    def __init__(self, arg):
+        self.arg = arg
+        
 class SmartSnippetListener(sublime_plugin.EventListener):
-
     def on_activated(self,view):
         self.view = view
         if not RunSmartSnippetCommand.global_autocompletions.get(view.id()):
@@ -53,8 +56,11 @@ class SmartSnippetListener(sublime_plugin.EventListener):
     # Checks the SMART Snippet package for a snippet with the name of the preceding text
     def prev_word_is_trigger(self, view):
         trigger = view.substr(view.word(view.sel()[0].a)).strip()
-        snip_file = sublime.packages_path() + "/SMART_Snippets/" + trigger + ".smart_snippet"
-        return os.path.isfile(snip_file) and self.match_scope(view, snip_file)
+        # snip_file = sublime.packages_path() + "/SMART_Snippets/" + trigger + ".smart_snippet"
+        for s in SSnip.snippet_triggers:
+            if re.match(s, trigger):
+                return self.match_scope(view, SSnip.snip_files.get(s))
+        return false
 
     def inside_qc_region(self,view):
         sel = self.view.sel()[0]
@@ -289,8 +295,11 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
     
     def snippet_contents(self):
         trigger = self.get_trigger()
-        package_dir = sublime.packages_path() + "/SMART_Snippets/"
-        snip_file = package_dir + trigger + ".smart_snippet"
+        # package_dir = sublime.packages_path() + "/SMART_Snippets/"
+        # snip_file = package_dir + trigger + ".smart_snippet"
+        for s in SSnip.snippet_triggers:
+            if re.match(s, trigger):
+                return self.match_scope(view, SSnip.snip_files.get(s))
         with open(snip_file, 'r') as f:
             return f.read()
 

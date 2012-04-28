@@ -10,11 +10,11 @@ These are some of my plans and ideas that have sprouted in my head during develo
 - Add more to code shorthand
   > access to the clipboard
 
-[70% Complete] Tabstops/AC/QP
+[Complete] Tabstops/AC/QP
   > Fix the regions issue.  When one region changes, it causes problems.  Perhaps, to get rid of this problem, once again change the structure of the global_* [FIXED]
   > Diff color for qs/ac/ts
   > Status bar info.  Where is the cursor in the snippet, what will happen next...
-  > Recursive
+  > Recursive [COMPLETE]
      - Allow for snippets within snippets.
 
 [COMPLETE] Scope
@@ -46,6 +46,8 @@ Changes in tmLanguage:
     > This would allow for symbols as triggers (eg. # or $)
     > Potentially allow for regex-matching triggers
     > Possible have triggers that trigger without tab?
+- Store snippet triggers in a list
+- Escape should break out of snippet layer and go to next one.
 
 # The Future
 - Inspired by concepts such as Light Table, I hope to see SMART Snippets providing for a more dynamic coding experience.  For example, as the user changes sections of code, the snippets could change dynamically.  Sublime Text and its API has so much to offer.  SMART Snippets is my attempt at getting all the power into the hands of the user.
