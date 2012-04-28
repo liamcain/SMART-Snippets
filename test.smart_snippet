@@ -1,3 +1,4 @@
 ###scope:text.plain
-Hello ${0:World}, ${1:QP{placeholder:word,nextword,anotherword} } ```insert('(...inserted with python...)')```
-SMART Snippets allow for Python inside your snippets. AC{_:_first,_second,_third} There is still much to do.
+Hello ${1:World}, ${0:QP{placeholder:word,nextword,anotherword} } ```insert('(...inserted with python...)')
+```
+SMART Snippets allow for Python inside your snippets. QP{_:_first,_second,_third}} There is still much to do.
