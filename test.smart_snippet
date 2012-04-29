@@ -1,3 +1,4 @@
+###trigger:test
 ###scope:text.plain
 Hello ${1:World}, ${0:QP{placeholder:word,nextword,anotherword} } ```insert('(...inserted with python...)')
 ```
