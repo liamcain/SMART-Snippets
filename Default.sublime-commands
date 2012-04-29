@@ -1,6 +1,6 @@
 [
 	{
-		"caption": "SMART Snippets: Create New Snippet",
+		"caption": "SMART Snippets: Create New SMART Snippet",
 		"command": "new_smart_snippet"
 	}
 ]

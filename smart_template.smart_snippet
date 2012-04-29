@@ -1,5 +1,5 @@
-###this is a comment
+###trigger:smart_template
 ###scope:source.smart_snippet
-```import random```
-${1:###scope:}${2:text.html}
+
+${1:###scope} ${2:text.html}
 ${3:}

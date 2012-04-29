@@ -180,6 +180,26 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         param, snip_scope = line.split(":",1)
         return snip_scope.strip() in scope
 
+    def add_word_to_globals(self, view, word, start, end):
+        other_end = word.find('}')
+        new_word = word[start:end]
+        r = sublime.Region(self.pos,self.pos+len(new_word))
+        rlist = word[end+1:other_end]
+        if word.startswith('AC'):
+            self.ac_regions.append(r)
+            if self.inner_reg_count[1] > -1:
+                self.global_autocompletions[view.id()].insert(self.inner_reg_count[1],rlist.split(','))
+                self.inner_reg_count[1] += 1
+            else:
+                self.global_autocompletions[view.id()].append(rlist.split(','))
+        else: # QP
+            self.qc_regions.append(r)
+            if self.inner_reg_count[2] > -1:
+                self.global_quickcompletions[view.id()].insert(self.inner_reg_count[2],rlist.split(','))
+                self.inner_reg_count[2] += 1
+            else:
+                self.global_quickcompletions[view.id()].append(rlist.split(','))
+
     # replace the shorthand code with the reps,
     # then exec the code segment
     # def run_code(self, edit, string):
@@ -196,16 +216,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             if overlap > 0 and not '\\' in word[overlap:overlap+1]: # means there is an overlapping region.
                 start = overlap + 5
                 end = word[4:].find(':')+4
-                other_end = word.find('}')
-                new_word = word[start:end]
-                r = sublime.Region(self.pos,self.pos+len(new_word))
-                rlist = word[end+1:other_end]
-                if word.startswith('AC'):
-                    self.ac_regions.append(r)
-                    self.global_autocompletions[self.view.id()].append(rlist.split(','))
-                else:
-                    self.qc_regions.append(r)
-                    self.global_quickcompletions[self.view.id()].append(rlist.split(','))
+                self.add_word_to_globals(view,word, start, end)
             else:
                 start = word.find(':')+1
                 end = word.find('}')
@@ -226,24 +237,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         else:
             start = word.find('{')+1
             end = word.find(':')
-            other_end = word.find('}')
-            new_word = word[start:end]
-            r = sublime.Region(self.pos,self.pos+len(new_word))
-            rlist = word[end+1:other_end]
-            if word.startswith('AC'):
-                self.ac_regions.append(r)
-                if self.inner_reg_count[1] > -1:
-                    self.global_autocompletions[view.id()].insert(self.inner_reg_count[1],rlist.split(','))
-                    self.inner_reg_count[1] += 1
-                else:
-                    self.global_autocompletions[view.id()].append(rlist.split(','))
-            else: # QP
-                self.qc_regions.append(r)
-                if self.inner_reg_count[2] > -1:
-                    self.global_quickcompletions[view.id()].insert(self.inner_reg_count[2],rlist.split(','))
-                    self.inner_reg_count[2] += 1
-                else:
-                    self.global_quickcompletions[view.id()].append(rlist.split(','))
+            self.add_word_to_globals(view, word, new_word, start, end)
         return new_word
 
     def parse_snippet(self,edit,contents,scope):
@@ -285,10 +279,10 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         self.temp_tabstops[:0] = view.get_regions('smart_tabstops')
         self.qc_regions.extend(view.get_regions('quick_completions'))
         view.add_regions('smart_tabstops', self.temp_tabstops, 'smart.tabstops')
-        # view.add_regions('smart_completions', self.ac_regions, 'smart.tabstops')
+        view.add_regions('smart_completions', self.ac_regions, 'smart.tabstops')
         view.add_regions('quick_completions', self.qc_regions, 'smart.tabstops')
         del self.temp_tabstops[:]
-        # del self.ac_regions[:]
+        del self.ac_regions[:]
         del self.qc_regions[:]
     
     def snippet_contents(self):
@@ -316,7 +310,6 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
                 looking = False
                 break
         if looking: self.inner_reg_count[stor_index] = -1
-        print self.inner_reg_count
 
     def run(self, edit):
         view      = self.view
