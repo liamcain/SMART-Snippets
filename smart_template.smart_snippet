@@ -1,5 +1,9 @@
+###regex:no
 ###trigger:smart_template
 ###scope:source.smart_snippet
-
-${1:###scope} ${2:text.html}
-${3:}
+\### Should the trigger be matched with regex or not?
+\### If you don't know what that means, set it to no.
+\###regex: ${1:QP{yes or no:yes,no}}
+\###trigger: ${2:--}
+${3:###scope:} ${4:text.html}
+${0:}

@@ -2,5 +2,9 @@
 	{
 		"caption": "SMART Snippets: Create New SMART Snippet",
 		"command": "new_smart_snippet"
+	},
+	{
+		"caption": "SMART Snippets: List Snippets",
+		"command": "list_smart_snippets"
 	}
 ]

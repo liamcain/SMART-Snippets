@@ -2,10 +2,10 @@ import sublime
 import sublime_plugin
 import os.path
 import re
-import snippetloader as SS
+import _snippetloader as SS
 
 SS.init_snipfiles()
-        
+
 class SmartSnippetListener(sublime_plugin.EventListener):
     def on_activated(self,view):
         self.view = view
@@ -16,9 +16,8 @@ class SmartSnippetListener(sublime_plugin.EventListener):
         if not RunSmartSnippetCommand.global_ts_order.get(view.id()):
             RunSmartSnippetCommand.global_ts_order[view.id()] = []
 
-
     def on_close(self, view):
-        RunSmartSnippetCommand.global_ts_order[view.id()] = None
+        del RunSmartSnippetCommand.global_ts_order[view.id()]
 
     def has_tabstop(self, view):
         return bool(RunSmartSnippetCommand.global_ts_order.get(view.id()))
@@ -31,9 +30,9 @@ class SmartSnippetListener(sublime_plugin.EventListener):
         text = RunSmartSnippetCommand.global_quickcompletions.get(view.id())[self.i][item]
         edit = view.begin_edit()
         view.replace(edit, word, text)
-        view.end_edit(edit)
         r = view.get_regions('quick_completions')
-        r[self.i] = (sublime.Region(word.a,word.a+len(text)))
+        r[self.i] = sublime.Region(word.a,word.a+len(text))
+        view.end_edit(edit)
         view.add_regions('quick_completions', r, 'smart.tabstops')
         view.sel().clear()
         view.sel().add(word.a+len(text))
@@ -56,8 +55,12 @@ class SmartSnippetListener(sublime_plugin.EventListener):
     def prev_word_is_trigger(self, view):
         trigger = view.substr(view.word(view.sel()[0].a)).strip()
         for s in SS.snippet_triggers:
-            if re.match(s+'$', trigger):
-                return self.match_scope(view, SS.snip_files.get(s))
+            if s.startswith('y'):
+                if re.match(s[1:]+'$', trigger):
+                    return self.match_scope(view, SS.snip_files.get(s))
+            else:
+                if s[1:] == trigger:
+                    return self.match_scope(view, SS.snip_files.get(s))
         return False
 
     def inside_qc_region(self,view):
@@ -81,10 +84,17 @@ class SmartSnippetListener(sublime_plugin.EventListener):
         sel = view.sel()[0]
         regions = view.get_regions('quick_completions')
         for i,r in enumerate(regions[:]):
-            if r.empty() and not ' ' in view.substr(sel.a-1):
+            if r.empty() and sel == r:
                 regions.remove(r)
                 qp = RunSmartSnippetCommand.global_quickcompletions[view.id()].pop(i)
                 view.add_regions('quick_completions', regions, 'smart.tabstops')
+
+        regions = view.get_regions('smart_completions')
+        for i,r in enumerate(regions[:]):
+            if r.empty() and not ' ' in view.substr(sel.a-1):
+                regions.remove(r)
+                qp = RunSmartSnippetCommand.global_autocompletions[view.id()].pop(i)
+                view.add_regions('smart_completions', regions, 'smart.tabstops')
 
         regions = view.get_regions('smart_tabstops')
         for i,r in enumerate(regions[:]):
@@ -128,7 +138,6 @@ class NextSmartTabstopCommand(sublime_plugin.TextCommand):
         view.add_regions('smart_tabstops', tabstops, 'smart.tabstops')
         view.sel().clear()
         view.sel().add(next)
-        # print ts_order
 
 class ExpandSelectionToQcRegionCommand(sublime_plugin.TextCommand):
     def run(self,edit):
@@ -254,9 +263,11 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
                 if line.startswith('###scope:'):
                     is_valid_scope = self.matches_scope(line,scope)
             elif is_valid_scope:
-                new_contents += line
+                if line.startswith('\###'):
+                    new_contents += line[1:]
+                else: new_contents += line
 
-        for word in re.split(r'((?:\$|AC|QP)\{[\w,:\s]+?(?:(?=\{)[\w\s:,\{]+\}|[\w:,\s]+)\s*\}|```[^`]+```)',new_contents):
+        for word in re.split(r'((?:\$|AC|QP)\{[\w,:\s]+?(?:(?=\{)[^}]+\}|[^\{\}]+)\s*\}|```[^`]+```)',new_contents):
             if word.startswith(('$','AC','QP')):
                 for code in re.findall('```[^`]+```', word, flags=re.DOTALL):
                     self.code_in_snip[0] = True
@@ -288,9 +299,14 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
     def snippet_contents(self):
         trigger = self.get_trigger()
         for s in SS.snippet_triggers:
-            if re.match(s+'$', trigger):
-                with open(SS.snip_files.get(s), 'r') as f:
-                    return f.read()
+            if s.startswith('y'):
+                if re.match(s[1:]+'$', trigger):
+                    with open(SS.snip_files.get(s), 'r') as f:
+                        return f.read()
+            else:
+                if s[1:] == trigger:
+                    with open(SS.snip_files.get(s), 'r') as f:
+                        return f.read()
 
     # gets the previous word
     def get_trigger(self):

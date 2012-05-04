@@ -1,2 +1,0 @@
-###scope:source.css
-display: ${1:QP{none:block,inline,none}}; ${0:}  ${3:} ${2:}

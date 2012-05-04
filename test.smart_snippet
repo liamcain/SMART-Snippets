@@ -1,5 +1,4 @@
 ###trigger:test
 ###scope:text.plain
-Hello ${1:World}, ${0:QP{placeholder:word,nextword,anotherword} } ```insert('(...inserted with python...)')
-```
-SMART Snippets allow for Python inside your snippets. re is still much to do.
+Hello ${0:World}, ${1:QP{placeholder:word,nextword,anotherword} }} ```insert('(...inserted with python...)')```
+SMART Snippets allow for Python inside your snippets.  is still much to do.

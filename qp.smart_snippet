@@ -1,0 +1,6 @@
+### Should the trigger be matched with regex or not?
+### If you don't know what that means, set it to no.
+###regex: yes
+###trigger:qp|QP
+###scope: source.smart_snippet
+```insert('QP')```{${1:visible}:${2:list}}
