@@ -16,7 +16,7 @@ class NewSmartSnippetListener(sublime_plugin.EventListener):
 		if view.file_name().endswith('.smart_snippet'):
 			is_regex = 'n'
 			regex_reg = view.find('(?<=###regex:).*', 0)
-			if view.substr(regex_reg).strip() == 'yes':
+			if regex_reg and view.substr(regex_reg).strip() == 'yes':
 				is_regex = 'y'
 			trig_reg = view.find('(?<=###trigger:).*', 0)
 			trig = is_regex + view.substr(trig_reg).strip()
@@ -24,13 +24,48 @@ class NewSmartSnippetListener(sublime_plugin.EventListener):
 				SS.snippet_triggers.append(trig)
 			SS.snip_files[trig] = view.file_name()
 
-class ListSmartSnippets(sublime_plugin.WindowCommand):
+class SmartViewSetterListener(sublime_plugin.EventListener):
+	def on_activated(self,view):
+		if not view.settings().get('is_widget'):
+			ListSmartSnippetsCommand.view = view
+
+class ListSmartSnippetsCommand(sublime_plugin.WindowCommand):
+	at_default = True
 	def run(self):
-		snip_trigs = []
+		view = self.view
+		scope = scope = view.scope_name(view.sel()[0].a)
+		default = ["Only show snippets that match scope", scope]
+		snip_trigs = [default]
 		for s in SS.snippet_triggers:
 			regex = '\nRegex' if s.startswith('y') else 'Not Regex'
 			snip_trigs.append([s[1:],regex])
 		self.window.show_quick_panel(snip_trigs, self.open_coor_snip_file)
+
+	def matches_scope(self,trigger):
+		with open(SS.snip_files.get(trigger), 'r') as f:
+		    snip = f.read()
+		view = self.view
+		scope = view.scope_name(view.sel()[0].a)
+		for l in snip.splitlines(True):
+			if l.startswith('###scope:'):
+				param, snip_scope = l.split(":",1)
+				if snip_scope.strip() in scope:
+					return True
+		return False
+
 	def open_coor_snip_file(self, item):
-		if item > -1:
+		if item == -1: return
+		if item == 0:
+			if self.at_default:
+				self.at_default = False
+				snip_trigs = ["Back"]
+				for t in SS.snippet_triggers:
+					if self.matches_scope(t):
+						regex = '\nRegex' if t.startswith('y') else 'Not Regex'
+						snip_trigs.append([t[1:],regex])
+				self.window.show_quick_panel(snip_trigs, self.open_coor_snip_file)
+			else:
+				self.at_default = True
+				self.window.run_command('list_smart_snippets')
+		else:
 			self.window.open_file(SS.snip_files.get(SS.snippet_triggers[item]))

@@ -8,6 +8,8 @@ snip_files = {}
 def init_snipfiles():
     pkg = sublime.packages_path()+'/SMART_Snippets/'
     for root, dirnames, filenames in os.walk(pkg):
+        if '.git' in dirnames:
+              dirnames.remove('.git')
         for filename in fnmatch.filter(filenames, '*.smart_snippet'):
             fn = os.path.join(root, filename)
             is_regex = 'n'  # n is no

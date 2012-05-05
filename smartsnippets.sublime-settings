@@ -1,0 +1,6 @@
+{
+	//Want SMART Snippets to expand automatically?
+	// Set this to try to expand as you type
+	// Not recommended for regular use
+	"smart_snippets_without_tab": false
+}

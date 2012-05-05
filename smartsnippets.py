@@ -3,12 +3,17 @@ import sublime_plugin
 import os.path
 import re
 import _snippetloader as SS
+import smart_utils as u
 
 SS.init_snipfiles()
+SETTINGS = "smartsnippets.sublime-settings"
 
 class SmartSnippetListener(sublime_plugin.EventListener):
     def on_activated(self,view):
+        if view.settings().get('is_widget'):
+            return
         self.view = view
+        self.ss_without_tab = sublime.load_settings(SETTINGS).get("smart_snippets_without_tab")
         if not RunSmartSnippetCommand.global_autocompletions.get(view.id()):
             RunSmartSnippetCommand.global_autocompletions[view.id()] = []
         if not RunSmartSnippetCommand.global_quickcompletions.get(view.id()):
@@ -22,12 +27,17 @@ class SmartSnippetListener(sublime_plugin.EventListener):
     def has_tabstop(self, view):
         return bool(RunSmartSnippetCommand.global_ts_order.get(view.id()))
 
+    def first(self, item):
+        if isinstance(item, basestring):
+            return item
+        return item[0]
+
     def replace(self, item):
         if item < 0: return
         view = self.view
         r = view.get_regions('quick_completions')
         word = r[self.i]
-        text = RunSmartSnippetCommand.global_quickcompletions.get(view.id())[self.i][item]
+        text = self.first(RunSmartSnippetCommand.global_quickcompletions.get(view.id())[self.i][item])
         edit = view.begin_edit()
         view.replace(edit, word, text)
         r = view.get_regions('quick_completions')
@@ -57,6 +67,7 @@ class SmartSnippetListener(sublime_plugin.EventListener):
         for s in SS.snippet_triggers:
             if s.startswith('y'):
                 if re.match(s[1:]+'$', trigger):
+                # if re.match('.*'+s[1:], trigger):
                     return self.match_scope(view, SS.snip_files.get(s))
             else:
                 if s[1:] == trigger:
@@ -103,6 +114,9 @@ class SmartSnippetListener(sublime_plugin.EventListener):
                 RunSmartSnippetCommand.global_ts_order[view.id()].pop(i)
                 view.add_regions('smart_tabstops', regions, 'smart.tabstops')
 
+        if not view.is_loading() and self.prev_word_is_trigger(view) and self.ss_without_tab:
+            view.run_command('run_smart_snippet')
+
 
     # adds a context for 'tab' in the keybindings
     def on_query_context(self, view, key, operator, operand, match_all):
@@ -132,12 +146,14 @@ class NextSmartTabstopCommand(sublime_plugin.TextCommand):
     def run(self,edit):
         view = self.view
         tabstops = self.view.get_regions('smart_tabstops')
+        view.set_status('smart_tabstops', 'Field '+str(self.field)+' of '+str(self.length))
         ts_order = RunSmartSnippetCommand.global_ts_order.get(view.id())
         next = tabstops.pop(ts_order.index(min(ts_order)))  # pops the next lowest value
         RunSmartSnippetCommand.global_ts_order[view.id()].remove(min(ts_order))
         view.add_regions('smart_tabstops', tabstops, 'smart.tabstops')
         view.sel().clear()
         view.sel().add(next)
+        self.field += 1
 
 class ExpandSelectionToQcRegionCommand(sublime_plugin.TextCommand):
     def run(self,edit):
@@ -170,11 +186,23 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             ('substr'                  , 'view.substr'),
             ('sel(?!f)'                , 'view.sel()[0]'),
             ('line\('                  , 'view.line('),
-            ('view'                    , 'self.view')
+            ('view'                    , 'self.view'),
+            ('\$date'                  , 'self.new_qp_region(edit, \'date\', u.list_time())')
             ]
 
-    def replace_all(self, text, list):
-        for i, j in list:
+    def new_qp_region(self, edit, d, placeholder, qplist):
+        view = self.view
+        r = sublime.Region(self.pos,self.pos+len(placeholder))
+        self.insert(edit, placeholder)
+        self.qc_regions.append(r)
+        if self.inner_reg_count[2] > -1:
+            self.global_quickcompletions[view.id()].insert(self.inner_reg_count[2],qplist)
+            self.inner_reg_count[2] += 1
+        else:
+            self.global_quickcompletions[view.id()].append(qplist)
+
+    def replace_all(self, text, rlist):
+        for i, j in rlist:
             text = re.sub(i, j, text)
         return text
 
@@ -251,7 +279,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
 
     def parse_snippet(self,edit,contents,scope):
         view = self.view
-        is_valid_scope = False
+        is_valid_scope = True
         new_contents = ''
         self.code_in_snip = [False,'']
         self.pos = self.get_trigger_reg().a
@@ -263,9 +291,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
                 if line.startswith('###scope:'):
                     is_valid_scope = self.matches_scope(line,scope)
             elif is_valid_scope:
-                if line.startswith('\###'):
-                    new_contents += line[1:]
-                else: new_contents += line
+                new_contents += line
 
         for word in re.split(r'((?:\$|AC|QP)\{[\w,:\s]+?(?:(?=\{)[^}]+\}|[^\{\}]+)\s*\}|```[^`]+```)',new_contents):
             if word.startswith(('$','AC','QP')):
@@ -277,8 +303,6 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             elif word.startswith('```'):
                 exec self.replace_all(word, self.reps)[3:-3]
                 visible_word = ''
-                if not 'insert' in word:
-                    self.pos -= 1
             else:
                 visible_word = word
 
@@ -301,6 +325,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         for s in SS.snippet_triggers:
             if s.startswith('y'):
                 if re.match(s[1:]+'$', trigger):
+                # if re.match('.*'+s[1:], trigger):
                     with open(SS.snip_files.get(s), 'r') as f:
                         return f.read()
             else:
@@ -343,7 +368,9 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         else:                   self.num_active_snips = 0
 
         self.parse_snippet(edit,snippet, scope)
-
+        print self.pos
         # if there is a tabstop, set the cursor to the first tabstop.
         if view.get_regions('smart_tabstops'):
+            NextSmartTabstopCommand.field = 1
+            NextSmartTabstopCommand.length = len(view.get_regions('smart_tabstops'))
             self.view.run_command("next_smart_tabstop")

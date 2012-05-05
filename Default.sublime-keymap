@@ -27,7 +27,7 @@
 		        "operand": false }
 		    ]
 	},
-	{ "keys": ["$"], 
+/*	{ "keys": ["$"], 
 	"command": "insert_snippet", 
 	"args": {"contents": "\\$\\{${1:1}:${2:placeholder}\\}"}, 
 	"context":
@@ -37,7 +37,7 @@
 			      "match_all": true, 
 		          "key": "selector" }
 			]
-	},
+	},*/
 	{
 		"keys": ["super+d"],
 		"command": "expand_selection_to_qc_region",
