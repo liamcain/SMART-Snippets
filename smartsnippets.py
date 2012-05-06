@@ -102,7 +102,7 @@ class SmartSnippetListener(sublime_plugin.EventListener):
 
         regions = view.get_regions('smart_completions')
         for i,r in enumerate(regions[:]):
-            if r.empty() and not ' ' in view.substr(sel.a-1):
+            if r.empty() and not ' ' in view.substr(sel.a-1) and not sel.a == 0:
                 regions.remove(r)
                 qp = RunSmartSnippetCommand.global_autocompletions[view.id()].pop(i)
                 view.add_regions('smart_completions', regions, 'smart.tabstops')
@@ -187,19 +187,26 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             ('sel(?!f)'                , 'view.sel()[0]'),
             ('line\('                  , 'view.line('),
             ('view'                    , 'self.view'),
-            ('\$date'                  , 'self.new_qp_region(edit, \'date\', u.list_time())')
+            ('\$date'                  , 'self.new_region(edit,%quick,\'date\', u.list_time())'),
+            ('\%quick'                 , 'self.global_quickcompletions,2'),
+            ('\%auto'                  , 'self.global_autocompletions,1')
             ]
 
-    def new_qp_region(self, edit, d, placeholder, qplist):
+    def new_region(self,edit,d,num,placeholder,reglist, insert = True):
         view = self.view
         r = sublime.Region(self.pos,self.pos+len(placeholder))
-        self.insert(edit, placeholder)
-        self.qc_regions.append(r)
-        if self.inner_reg_count[2] > -1:
-            self.global_quickcompletions[view.id()].insert(self.inner_reg_count[2],qplist)
-            self.inner_reg_count[2] += 1
+        if insert: self.insert(edit, placeholder)
+        if num == 0:
+            self.temp_tabstops.append(r)
+        elif num == 1:
+            self.ac_regions.append(r)
         else:
-            self.global_quickcompletions[view.id()].append(qplist)
+            self.qc_regions.append(r)
+        if self.inner_reg_count[num] > -1:
+            d[view.id()].insert(self.inner_reg_count[num],reglist)
+            self.inner_reg_count[num] += 1
+        else:
+            d[view.id()].append(reglist)
 
     def replace_all(self, text, rlist):
         for i, j in rlist:
@@ -217,25 +224,14 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         param, snip_scope = line.split(":",1)
         return snip_scope.strip() in scope
 
-    def add_word_to_globals(self, view, word, start, end):
+    def add_word_to_globals(self, edit, view, word, start, end, insert=True):
         other_end = word.find('}')
-        new_word = word[start:end]
-        r = sublime.Region(self.pos,self.pos+len(new_word))
+        placeholder = word[start:end]
         rlist = word[end+1:other_end]
         if word.startswith('AC'):
-            self.ac_regions.append(r)
-            if self.inner_reg_count[1] > -1:
-                self.global_autocompletions[view.id()].insert(self.inner_reg_count[1],rlist.split(','))
-                self.inner_reg_count[1] += 1
-            else:
-                self.global_autocompletions[view.id()].append(rlist.split(','))
+            self.new_region(edit, self.global_autocompletions, 1, placeholder, rlist.split(','), insert)
         else: # QP
-            self.qc_regions.append(r)
-            if self.inner_reg_count[2] > -1:
-                self.global_quickcompletions[view.id()].insert(self.inner_reg_count[2],rlist.split(','))
-                self.inner_reg_count[2] += 1
-            else:
-                self.global_quickcompletions[view.id()].append(rlist.split(','))
+            self.new_region(edit, self.global_quickcompletions, 2, placeholder, rlist.split(','), insert)
 
     # replace the shorthand code with the reps,
     # then exec the code segment
@@ -247,35 +243,27 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
     # ex. ${0:snippet}
     #           ^
     # The method finds the word snippet and returns it to be inserted into the view
-    def get_vis(self, view, word):
+    def extract_regions(self,edit,view,word):
         if word.startswith('$'):
             overlap = word[4:].find('{')
             if overlap > 0 and not '\\' in word[overlap:overlap+1]: # means there is an overlapping region.
                 start = overlap + 5
                 end = word[4:].find(':')+4
-                self.add_word_to_globals(view,word, start, end)
+                self.add_word_to_globals(edit,view,word,start,end,False)
             else:
                 start = word.find(':')+1
                 end = word.find('}')
-            new_word = word[start:end]
+            placeholder = word[start:end]
             ts_index = int(re.search('\d{1,2}',word).group())
             if ts_index == 0:
                 ts_index = 100
             ts_index -= 100 * self.num_active_snips
-            ts_region = sublime.Region(self.pos,self.pos+len(new_word))
-
-            if self.inner_reg_count[0] > -1:
-                self.global_ts_order.get(view.id()).insert(self.inner_reg_count[0],ts_index)
-                self.inner_reg_count[0] += 1
-            else:
-                self.global_ts_order.get(view.id()).append(ts_index)
-            self.temp_tabstops.append(ts_region)
-
+            ts_region = sublime.Region(self.pos,self.pos+len(placeholder))
+            self.new_region(edit,self.global_ts_order,0,placeholder,ts_index)
         else:
             start = word.find('{')+1
             end = word.find(':')
-            self.add_word_to_globals(view, word, new_word, start, end)
-        return new_word
+            self.add_word_to_globals(edit,view,word,start,end)
 
     def parse_snippet(self,edit,contents,scope):
         view = self.view
@@ -299,17 +287,14 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
                     self.code_in_snip[0] = True
                     exec self.replace_all(code, self.reps)[3:-3]
                     word = word.replace(code,str(self.code_in_snip[1]))
-                visible_word = self.get_vis(view, word)
+                self.extract_regions(edit,view,word)
             elif word.startswith('```'):
                 exec self.replace_all(word, self.reps)[3:-3]
-                visible_word = ''
             else:
-                visible_word = word
-
-            view.insert(edit,self.pos,visible_word)
-            self.pos += len(visible_word)
-            view.sel().clear()
-            view.sel().add(sublime.Region(self.pos,self.pos))
+                view.insert(edit,self.pos,word)
+                self.pos += len(word)
+                view.sel().clear()
+                view.sel().add(sublime.Region(self.pos,self.pos))
 
         self.temp_tabstops[:0] = view.get_regions('smart_tabstops')
         self.qc_regions.extend(view.get_regions('quick_completions'))
@@ -368,7 +353,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         else:                   self.num_active_snips = 0
 
         self.parse_snippet(edit,snippet, scope)
-        print self.pos
+
         # if there is a tabstop, set the cursor to the first tabstop.
         if view.get_regions('smart_tabstops'):
             NextSmartTabstopCommand.field = 1

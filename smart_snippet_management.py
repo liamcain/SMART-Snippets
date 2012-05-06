@@ -68,4 +68,4 @@ class ListSmartSnippetsCommand(sublime_plugin.WindowCommand):
 				self.at_default = True
 				self.window.run_command('list_smart_snippets')
 		else:
-			self.window.open_file(SS.snip_files.get(SS.snippet_triggers[item]))
+			self.window.open_file(SS.snip_files.get(SS.snippet_triggers[item-1]))
