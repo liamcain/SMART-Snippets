@@ -5,13 +5,13 @@ These are some of my plans and ideas that have sprouted in my head during develo
 [COMPLETE] Syntax definition for .smart_snippet (tmlanguage)
    > Thanks Facelessuser!
 
-- Smart snippets for making smart snippets
+[COMPLETE] Smart snippets for making smart snippets
 
 - Add more to code shorthand
   > access to the clipboard
 
 [Complete] Tabstops/AC/QP
-  > Fix the regions issue.  When one region changes, it causes problems.  Perhaps, to get rid of this problem, once again change the structure of the global_* [FIXED]
+  > Fix the regions issue.  When one region changes, it causes problems.  Perhaps, to get rid of this problem, once again change the structure of the * [FIXED]
   > Diff color for qs/ac/ts
   > Status bar info.  Where is the cursor in the snippet, what will happen next...
   > Recursive [COMPLETE]
@@ -25,7 +25,7 @@ These are some of my plans and ideas that have sprouted in my head during develo
 - Snippet management
   > create snippet from selection
   > quickly edit most recent snippet
-  > delete snippet form qp
+  > delete snippet from qp
   > organize snippet by scope
 
 [Complete] AC and QP
@@ -42,12 +42,14 @@ Changes in tmLanguage:
  > You can have variables that span across code regions
  > You can import your own modules.
 - make '###' into a comment for smart snippets [CHECK!]
-- provide an optional '###trigger' field for snippets
+- provide an optional '###trigger' field for snippets [CHECK!]
     > This would allow for symbols as triggers (eg. # or $)
     > Potentially allow for regex-matching triggers
     > Possible have triggers that trigger without tab?
-- Store snippet triggers in a list
+- Store snippet triggers in a list [CHECK!]
 - Escape should break out of snippet layer and go to next one.
 
 # The Future
 - Inspired by concepts such as Light Table, I hope to see SMART Snippets providing for a more dynamic coding experience.  For example, as the user changes sections of code, the snippets could change dynamically.  Sublime Text and its API has so much to offer.  SMART Snippets is my attempt at getting all the power into the hands of the user.
+
+- Add optional '###no_tab:' yes/no to override user pref for expansion without tab.

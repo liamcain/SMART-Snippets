@@ -15,11 +15,15 @@ class NewSmartSnippetListener(sublime_plugin.EventListener):
 	def on_post_save(self,view):
 		if view.file_name().endswith('.smart_snippet'):
 			is_regex = 'n'
+			requires_tab = 'y'
 			regex_reg = view.find('(?<=###regex:).*', 0)
 			if regex_reg and view.substr(regex_reg).strip() == 'yes':
 				is_regex = 'y'
+			req_tab_reg = view.find('(?<=###tab:).*', 0)
+			if req_tab_reg and view.substr(req_tab_reg).strip() == 'no':
+				req_tab_reg = 'n'
 			trig_reg = view.find('(?<=###trigger:).*', 0)
-			trig = is_regex + view.substr(trig_reg).strip()
+			trig = is_regex + req_tab_reg + view.substr(trig_reg).strip()
 			if not trig in SS.snippet_triggers:
 				SS.snippet_triggers.append(trig)
 			SS.snip_files[trig] = view.file_name()
@@ -37,8 +41,9 @@ class ListSmartSnippetsCommand(sublime_plugin.WindowCommand):
 		default = ["Only show snippets that match scope", scope]
 		snip_trigs = [default]
 		for s in SS.snippet_triggers:
-			regex = '\nRegex' if s.startswith('y') else 'Not Regex'
-			snip_trigs.append([s[1:],regex])
+			regex = 'Regex' if s[0] =='y' else 'Not Regex'
+			req_tab = '; Requires tab' if s[1] =='y' else '; Does\'t require tab'
+			snip_trigs.append([s[2:],regex+req_tab])
 		self.window.show_quick_panel(snip_trigs, self.open_coor_snip_file)
 
 	def matches_scope(self,trigger):
@@ -61,8 +66,9 @@ class ListSmartSnippetsCommand(sublime_plugin.WindowCommand):
 				snip_trigs = ["Back"]
 				for t in SS.snippet_triggers:
 					if self.matches_scope(t):
-						regex = '\nRegex' if t.startswith('y') else 'Not Regex'
-						snip_trigs.append([t[1:],regex])
+						regex = 'Regex' if t[:1] =='y' else 'Not Regex'
+						req_tab = '; Requires tab' if t[2:2] =='y' else '; Does\'t require tab'
+						snip_trigs.append([t[2:],regex + req_tab])
 				self.window.show_quick_panel(snip_trigs, self.open_coor_snip_file)
 			else:
 				self.at_default = True

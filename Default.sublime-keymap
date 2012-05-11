@@ -27,6 +27,20 @@
 		        "operand": false }
 		    ]
 	},
+	{
+		"keys": ["escape"],
+		"command": "escape_tabstop",
+		"context":
+		    [
+		        { "key": "has_active_tabstop",
+		        "operator": "equal",
+		        "operand": true, 
+		        "match_all": true },
+		        { "key": "auto_complete_visible", 
+		        "operator": "equal", 
+		        "operand": false }
+		    ]
+	},
 /*	{ "keys": ["$"], 
 	"command": "insert_snippet", 
 	"args": {"contents": "\\$\\{${1:1}:${2:placeholder}\\}"}, 

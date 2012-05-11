@@ -1,4 +1,4 @@
 ###trigger:test
 ###scope:text.plain
-Hello ${0:World}, ${1:QP{placeholder:word,nextword,anotherword} }} ```insert('(...inserted with python...)')```
-SMART Snippets allow for Python inside your snippets. AC{text:something} is still much to do.
+Hello ${1:World}, ${2:QP{placeholder:word,nextword,anotherword} }} ```insert('(...inserted with python...)')```
+SMART Snippets allow for Python inside your snippets. AC{text:something} is still ```region(code,print 'hi')``` to do. ${0:}
