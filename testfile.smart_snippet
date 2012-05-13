@@ -1,0 +1,9 @@
+###params:regex, auto_expand
+###trigger: test
+###scope: text.html
+something....
+
+###trigger:test
+###scope:text.plain
+Hello ${1:World}, ${2:QP{placeholder:word,nextword,anotherword} }} ```insert('(...inserted with python...)')```
+SMART Snippets allow for Python inside your snippets.  AC{text:something} is still ```region(code,print 'hi')``` to do. ${0:}

@@ -36,6 +36,9 @@
 		        "operator": "equal",
 		        "operand": true, 
 		        "match_all": true },
+		        { "key": "setting.is_widget", 
+		        "operator": "equal", 
+		        "operand": false },
 		        { "key": "auto_complete_visible", 
 		        "operator": "equal", 
 		        "operand": false }

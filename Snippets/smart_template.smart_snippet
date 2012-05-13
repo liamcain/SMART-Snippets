@@ -1,9 +1,7 @@
-###regex:no
+###params: --
 ###trigger:smart_template
 ###scope:source.smart_snippet
-```insert('###')```Should the trigger be matched with regex or not?
-```insert('###')```If you don't know what that means, set it to no.
-```insert('###')```regex: ${1:QP{yes or no:Yes,No}}
+```insert('###')```params: ${1:AC{--:--,regex,auto_expand}}
 ```insert('###')```trigger: ${2:--}
-${3:###scope:} ${4:text.html}
+${4:```region(###scope:,%select(%line))```} ${3:text.html}
 ${0:}

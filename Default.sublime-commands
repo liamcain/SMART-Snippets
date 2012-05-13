@@ -4,7 +4,7 @@
 		"command": "new_smart_snippet"
 	},
 	{
-		"caption": "SMART Snippets: List Snippets",
+		"caption": "SMART Snippets: List SMART Snippets",
 		"command": "list_smart_snippets"
 	}
 ]
