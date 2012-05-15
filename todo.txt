@@ -52,4 +52,6 @@ Changes in tmLanguage:
 # The Future
 - Inspired by concepts such as Light Table, I hope to see SMART Snippets providing for a more dynamic coding experience.  For example, as the user changes sections of code, the snippets could change dynamically.  Sublime Text and its API has so much to offer.  SMART Snippets is my attempt at getting all the power into the hands of the user.
 
-- Add optional '###no_tab:' yes/no to override user pref for expansion without tab.
+[COMPLETE] Add optional '###no_tab:' yes/no to override user pref for expansion without tab.
+
+- Make placeholder optional in new_region...

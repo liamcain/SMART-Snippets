@@ -22,10 +22,13 @@ class SmartSnippetListener(sublime_plugin.EventListener):
         r = RunSmartSnippetCommand
         self.auto_expand = sublime.load_settings(SETTINGS).get("smart_snippets_without_tab")
 
-        dicts = [r.autocompletions,r.quickcompletions,r.ts_order,r.code_blocks,r.code_minions]
+        dicts = [r.autocompletions,r.quickcompletions,
+                 r.ts_order,r.code_blocks, r.minion_index]
         for l in dicts:
             if not l.get(view.id()):
                 l[view.id()] = []
+        if not r.code_minions.get(view.id()):
+            r.code_minions[view.id()] = {}
 
     def on_close(self, view):
         del RunSmartSnippetCommand.ts_order[view.id()]
@@ -37,6 +40,19 @@ class SmartSnippetListener(sublime_plugin.EventListener):
         if isinstance(item, basestring):
             return item
         return item[0]
+
+    def insert(self,view,index,string):
+        edit = view.begin_edit()
+        region = view.get_regions('code_minions')[index]
+        view.replace(edit, region, string)
+        view.end_edit(edit)
+
+    def activate(self,view,name):
+        r = RunSmartSnippetCommand
+        index = r.minion_index[view.id()].index(name)
+        exec r.code_minions[view.id()].pop(name)
+        regions = view.get_regions('code_minions')
+        view.add_regions('code_minions',regions,'smart_tabstops',sublime.PERSISTENT)
 
     def replace(self, item):
         if item < 0: return
@@ -227,40 +243,45 @@ class ExpandSelectionToQcRegionCommand(sublime_plugin.TextCommand):
 class RunSmartSnippetCommand(sublime_plugin.TextCommand):
     # global dictionaries to give access the autocompletions and quickcompletions
     # key = view id
-    autocompletions = {}
+    autocompletions  = {}
     quickcompletions = {}
-    code_blocks = {}
-    code_minions = {}
-    ts_order = {}
-    temp_tabstops = []
-    ac_regions    = []
-    qc_regions    = []
-    code_regions  = []
-    minion_regions  = []
-    active_snips = 0
-    inner_reg_count = [-1,-1,-1,-1,-1]
+    code_blocks      = {}
+    ts_order         = {}
+    minion_index     = {}
+    code_minions     = {}
+    minion_regions   = []
+    temp_tabstops    = []
+    ac_regions       = []
+    qc_regions       = []
+    code_regions     = []
+    active_snips     = 0
+    inner_reg_count  = [-1,-1,-1,-1,-1]
 
     # This is a working list of substitutions for embedded code.
     # It will serve as shorthand for people who want quick access to common python functions and commands
     reps = [
-            # ('([\w]+)\s*='            , 'global \\1\n\\1 ='),
-            ('insert\('                 , 'self.insert(edit,'),
+            ('(when.+)insert\('         , '\\1self.insert(view,index,'),
+            ('(?<!.)insert\('           , 'self.insert(edit,'),
             ('%line'                    , 'line(%sel)'),
             ('%prev_word'               , 'substr(word(%sel))'),
             ('(?<!_)word\('             , 'view.word('),
             ('substr'                   , 'view.substr'),
             ('line\('                   , 'view.line('),
             ('\%clip'                   , 'sublime.get_clipboard()'),
+            ('when\s([\w]+):\s*([^`]+)' , 'self.new_region(edit,%minion,"","\\1",minion="\\2")'),
             ('\%select\((.*)\)'         , 'view.sel().add(\\1)'),
             ('region\(([^,]+),([^,]+)\)', 'self.new_region(edit,%code,"\\1","\\2")'),
+            ('activate\('               , 'self.activate(view,'),
             ('\%date'                   , 'self.new_region(edit,%quick,\'date\', u.list_time())'),
             ('\%auto'                   , 'self.autocompletions,1'),
             ('\%quick'                  , 'self.quickcompletions,2'),
             ('\%code'                   , 'self.code_blocks,3'),
+            ('\%minion'                 , 'self.minion_index,4'),
             ('%sel'                     , 'view.sel()[0]'),
             ('view'                     , 'self.view')
             ]
-    def new_region(self,edit,d,num,placeholder,reglist, insert = True):
+
+    def new_region(self,edit,d,num,placeholder,reglist,insert = True,minion=None):
         view = self.view
         r = sublime.Region(self.pos,self.pos+len(placeholder))
         if insert: self.insert(edit, placeholder)
@@ -274,6 +295,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             self.code_regions.append(r)
         else:
             self.minion_regions.append(r)
+            self.code_minions[view.id()][reglist] = minion
         if self.inner_reg_count[num] > -1:
             d[view.id()].insert(self.inner_reg_count[num],reglist)
             self.inner_reg_count[num] += 1
@@ -362,6 +384,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
                 self.code_in_snip[0] = False
                 self.extract_regions(edit,view,word)
             elif word.startswith('```'):
+                print self.replace_all(word, self.reps)[3:-3]
                 exec self.replace_all(word, self.reps)[3:-3]
             else:
                 view.insert(edit,self.pos,word)
@@ -375,15 +398,18 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         view.add_regions('smart_completions', self.ac_regions, 'smart.tabstops',sublime.PERSISTENT)
         view.add_regions('quick_completions', self.qc_regions, 'smart.tabstops',sublime.PERSISTENT)
         view.add_regions('code_regions', self.code_regions, 'smart.tabstops',sublime.PERSISTENT)
+        view.add_regions('code_minions', self.minion_regions, 'smart_tabstops', sublime.PERSISTENT)
         del self.temp_tabstops[:]
         del self.ac_regions[:]
         del self.qc_regions[:]
         del self.code_regions[:]
+        print self.minion_index
+        print self.minion_regions
+        print self.code_minions
         del self.minion_regions[:]
     
     def snippet_contents(self):
         trigger = self.get_trigger()
-        # for s in SS.snippet_triggers:
         for s in SS.snip_files.keys():
             if s.startswith('y'):
                 if re.match(s[2:]+'$', trigger):
@@ -419,7 +445,8 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         scope        = view.scope_name(sel.a)
         snippet      = self.snippet_contents()
         region_names = ['smart_tabstops','smart_completions',
-                'quick_completions','code_regions','code_minions']
+                        'quick_completions','code_regions',
+                        'code_minions']
 
         for i,n in enumerate(region_names):
             self.get_reg_pos(view,n,i)
