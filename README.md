@@ -26,20 +26,20 @@ What To Do From There
 =====================
 SMART Snippets is meant to be the missing link between the average user and the ST2 API while bringing more fluidity to the power user.  On that note, here are the available commands so far:
 
-- $0,$1,$2...$n: Tabstops.  This syntax is taken from the default snippets.  Pressing tab moves the cursor to the next sequential tabstop.  $0 represents the end position.
-- ${0:placeholder}: Tabstops w/ Placeholder text.  Again taken from the default snippet behavior, pressing tab will select the placeholder text in the next sequential tabstop
-- QP{placeholder:[options]}: A Quick Panel region.  When the placeholder text is selected in the view, a quick panel will dropdown with a list of options.  Selecting the option will replace the placeholder text with the given option.  *Note* Quickpanel options can include python code when given the following syntax: text\tCODE.  So SMART Snippets will execute anything after \t.
-- AC{placeholder:[options]}: An Autocomplete Region.  Similar to the QP Region, this region will display a list of options in the autocompletion panel.
-- ```python code```: Run python code directly within a snippet.  Insert your own raw python code or take use of SMART Snippets awesome custom syntax.  That's right.  SMART Snippets tries to make your python even easier by adding custom functions, syntax variants, and more.
+- `$0,$1,$2...$n`: Tabstops.  This syntax is taken from the default snippets.  Pressing tab moves the cursor to the next sequential tabstop.  $0 represents the end position.
+- `${0:placeholder}`: Tabstops w/ Placeholder text.  Again taken from the default snippet behavior, pressing tab will select the placeholder text in the next sequential tabstop
+- `QP{placeholder:[options]}`: A Quick Panel region.  When the placeholder text is selected in the view, a quick panel will dropdown with a list of options.  Selecting the option will replace the placeholder text with the given option.  *Note* Quickpanel options can include python code when given the following syntax: text\tCODE.  So SMART Snippets will execute anything after \t.
+- `AC{placeholder:[options]}`: An Autocomplete Region.  Similar to the QP Region, this region will display a list of options in the autocompletion panel.
+- `` ```python code``` ``: Run python code directly within a snippet.  Insert your own raw python code or take use of SMART Snippets awesome custom syntax.  That's right.  SMART Snippets tries to make your python even easier by adding custom functions, syntax variants, and more.
 
 SMART Snippet's Custom Syntax
 =============================
 The following is a list of functions and additions to the python insertions available at your disposal.
 
-- insert(string): Obviously you'll need some way to insert the text generated within the snippets.  Insert will insert the text at the correct spot for you. (Don't worry about keeping track of the cursor).  For beta testers: I'm considering changing this syntax.  Possible alternatives being insert string or print string.  What do you think?
-- region(placeholder,code [on 'char']): Sometimes you don't want to run the python code immediately.  Adding code to the region function means the code will not run until the cursor is within the given region.  Optionally, adding "on 'char'" means that the code will not run until you press a given key why within the code region.  For example print 'Hello World' on 't' means that pressing 't' while the cursor overlaps the code region will active the code. (Use '\n' for enter and '\t' for tab)
-- when name:CODE : Here comes the interesting part.  The 'when' keyword creates what I call a 'minion region.'  The code will only run when the given name is activated.
-- activate(string_name):  To activate a 'minion region,' use this function, passing the corresponding name.  Protip: use activate() within a code region to activate code in an adjacent region when the cursor lands in a specific spot.
+- `insert(string)`: Obviously you'll need some way to insert the text generated within the snippets.  Insert will insert the text at the correct spot for you. (Don't worry about keeping track of the cursor).  For beta testers: I'm considering changing this syntax.  Possible alternatives being insert string or print string.  What do you think?
+- `region(placeholder,code [on 'char'])`: Sometimes you don't want to run the python code immediately.  Adding code to the region function means the code will not run until the cursor is within the given region.  Optionally, adding "on 'char'" means that the code will not run until you press a given key why within the code region.  For example print 'Hello World' on 't' means that pressing 't' while the cursor overlaps the code region will active the code. (Use '\n' for enter and '\t' for tab)
+- `when name:CODE` : Here comes the interesting part.  The 'when' keyword creates what I call a 'minion region.'  The code will only run when the given name is activated.
+- `activate(string_name)`:  To activate a 'minion region,' use this function, passing the corresponding name.  Protip: use activate() within a code region to activate code in an adjacent region when the cursor lands in a specific spot.
 
 Not a Pythonista?
 =================
