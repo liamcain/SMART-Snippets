@@ -44,17 +44,6 @@
 		        "operand": false }
 		    ]
 	},
-/*	{ "keys": ["$"], 
-	"command": "insert_snippet", 
-	"args": {"contents": "\\$\\{${1:1}:${2:placeholder}\\}"}, 
-	"context":
-			[
-				{ "operand": "source.smart_snippet",
-		          "operator": "equal", 
-			      "match_all": true, 
-		          "key": "selector" }
-			]
-	},*/
 	{
 		"keys": ["super+d"],
 		"command": "expand_selection_to_qc_region",
