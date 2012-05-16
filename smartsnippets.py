@@ -114,7 +114,7 @@ class SmartSnippetListener(sublime_plugin.EventListener):
         for i,r in enumerate(view.get_regions(name)):
             if sel.contains(r):
                 regions.append(i)
-        if len(regions) > 1: print 'working'; return regions
+        if len(regions) > 1: return regions
         return []
 
     # For checking if the cursor selection overlaps with a QP region
@@ -138,9 +138,15 @@ class SmartSnippetListener(sublime_plugin.EventListener):
         regions = view.get_regions('code_regions')
         for i,reg in reversed(list(enumerate(regions))):
             if reg.contains(sel):
+                key_index = -1
+                key = re.search('on\s\'([^\']+)\'',r.code_blocks[view.id()][i].replace('\n',r'\n'))
+                if key:
+                    if not view.substr(sel.a-1) == key.group(1).replace('\\n','\n'):
+                        continue
+                    key_index = r.code_blocks[view.id()][i].find('on ')
                 regions.pop(i)
                 self.busy = True
-                exec r.code_blocks[view.id()].pop(i) in locals()
+                exec (r.code_blocks[view.id()].pop(i)[:key_index]) in locals()
         self.busy = False
         view.add_regions('code_regions', regions, 'smart.tabstops',sublime.PERSISTENT)
 
@@ -241,7 +247,6 @@ class EscapeTabstop(sublime_plugin.TextCommand):
                 regs.append(old_regs[i])
         r.ts_order[view.id()] = l
         view.add_regions('smart_tabstops',regs,'smart.tabstops',sublime.PERSISTENT)
-        # num_tabstops = len(view.get_regions('smart_tabstops'))
         SS.update_statusbar(view)
 
 class ExpandSelectionToQcRegionCommand(sublime_plugin.TextCommand):
@@ -298,7 +303,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             ('view'                     , 'self.view')
             ]
 
-    def new_region(self,edit,d,num,placeholder,reglist,insert = True):
+    def new_region(self,edit,d,num,placeholder,values,insert = True):
         view = self.view
         r = sublime.Region(self.pos,self.pos+len(placeholder))
         if insert: self.insert(edit, placeholder)
@@ -309,14 +314,14 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         elif num == 2:
             self.qc_regions.append(r)
         elif num == 3:
-            self.code_regions.append(r)
+            self.code_regions.append(sublime.Region(r.a-1,r.b+1))
         else:
             self.minion_regions.append(r)
         if self.inner_reg_count[num] > -1:
-            d[view.id()].insert(self.inner_reg_count[num],reglist)
+            d[view.id()].insert(self.inner_reg_count[num],values)
             self.inner_reg_count[num] += 1
         else:
-            d[view.id()].append(reglist)
+            d[view.id()].append(values)
 
     def add_sel(self, string):
         region = self.view.find(string, self.pos)
@@ -391,7 +396,7 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             elif is_valid_scope:
                 new_contents += line
 
-        for word in re.split(r'((?:\$|AC|QP)\{[\w,:\s]+?(?:(?=\{)[^}]+\}|[^\{\}]+)\s*\}|```[^`]+```)',new_contents):
+        for word in re.split(r'((?:\$|AC|QP)\{[\w,:\s]+?(?:(?=\{)[^}]+\}|[^\{\}]+)\s*\}|```[^`]+```|(?<!\\)\$\d{1,2})',new_contents):
             if word.startswith(('$','AC','QP')):
                 for code in re.findall('```[^`]+```', word, flags=re.DOTALL):
                     self.code_in_snip[0] = True
@@ -462,9 +467,9 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
 
         gt = self.ts_order.get(view.id())
         if gt and len(gt) > 0:
-            self.active_snips += 1
+            RunSmartSnippetCommand.active_snips += 1
         else: 
-            self.active_snips = 1
+            RunSmartSnippetCommand.active_snips = 1
 
         self.parse_snippet(edit,snippet, scope)
 

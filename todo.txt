@@ -34,6 +34,7 @@ Changes in tmLanguage:
 - Code should have a background?
 - Code is now ``` instead of `
 - ### is now comments
+- new keywords: when, on, activate,params,...
 - Change scopes around so that python code can go within regions
 
 #Some new ideas --
@@ -47,7 +48,7 @@ Changes in tmLanguage:
     > Potentially allow for regex-matching triggers
     > Possible have triggers that trigger without tab?
 - Store snippet triggers in a list [CHECK!]
-- Escape should break out of snippet layer and go to next one.
+- Escape should break out of snippet layer and go to next one.[CHECK!]
 
 # The Future
 - Inspired by concepts such as Light Table, I hope to see SMART Snippets providing for a more dynamic coding experience.  For example, as the user changes sections of code, the snippets could change dynamically.  Sublime Text and its API has so much to offer.  SMART Snippets is my attempt at getting all the power into the hands of the user.
@@ -55,3 +56,6 @@ Changes in tmLanguage:
 [COMPLETE] Add optional '###no_tab:' yes/no to override user pref for expansion without tab.
 
 - Make placeholder optional in new_region...
+- Preserve indent
+- Make snippet from selection
+- $1 = tabstop
