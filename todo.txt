@@ -55,7 +55,7 @@ Changes in tmLanguage:
 
 [COMPLETE] Add optional '###no_tab:' yes/no to override user pref for expansion without tab.
 
-- Make placeholder optional in new_region...
+- Make placeholder optional in new_region... [COMPLETE]
 - Preserve indent
 - Make snippet from selection
-- $1 = tabstop
+- $1 = tabstop [COMPLETE]

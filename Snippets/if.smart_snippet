@@ -1,6 +1,6 @@
 ###params: --
 ###trigger: if
 ###scope: source.java
-if(${1:})```when multiline: insert('{')```
+if($1)```when multiline: insert('{')```
 	${2:```region(code,activate('multiline') on '\n')```}
-```when multiline: insert('}')```${0:}
+```when multiline: insert('}')```$0

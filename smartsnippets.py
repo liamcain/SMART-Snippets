@@ -1,3 +1,9 @@
+'''
+SMART Snippets
+Licensed under MIT
+Copyright (c) 2012 William Cain
+'''
+
 import sublime
 import sublime_plugin
 import os.path
@@ -290,11 +296,11 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             ('substr'                   , 'view.substr'),
             ('line\('                   , 'view.line('),
             ('\%clip'                   , 'sublime.get_clipboard()'),
-            ('when\s([\w]+):\s*([^`]+)' , 'self.new_region(edit,%minion,"",("\\1","\\2"))'),
+            ('when\s([\w]+):\s*([^`]+)' , 'self.new_region(edit,%minion,("\\1","\\2"))'),
             ('\%select\((.*)\)'         , 'view.sel().add(\\1)'),
-            ('region\(([^,]+),([^,]+)\)', 'self.new_region(edit,%code,"\\1","\\2")'),
+            ('region\(([^,]+),([^,]+)\)', 'self.new_region(edit,%code,"\\2",placeholder="\\1")'),
             ('activate\('               , 'self.activate(view,'),
-            ('\%date'                   , 'self.new_region(edit,%quick,\'date\', u.list_time())'),
+            ('\%date'                   , 'self.new_region(edit,%quick, u.list_time(),placeholder=\'date\')'),
             ('\%auto'                   , 'self.autocompletions,1'),
             ('\%quick'                  , 'self.quickcompletions,2'),
             ('\%code'                   , 'self.code_blocks,3'),
@@ -303,10 +309,10 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
             ('view'                     , 'self.view')
             ]
 
-    def new_region(self,edit,d,num,placeholder,values,insert = True):
+    def new_region(self,edit,d,num,values,placeholder = ''):
         view = self.view
         r = sublime.Region(self.pos,self.pos+len(placeholder))
-        if insert: self.insert(edit, placeholder)
+        if placeholder: self.insert(edit, placeholder)
         if num == 0:
             self.temp_tabstops.append(r)
         elif num == 1:
@@ -350,31 +356,32 @@ class RunSmartSnippetCommand(sublime_plugin.TextCommand):
         if not insert:  # if it's an inner region
             word = word[start-3:start]
         if word.startswith('AC'):
-            self.new_region(edit, self.autocompletions,1,placeholder,rlist.split(','),insert)
+            self.new_region(edit, self.autocompletions,1,rlist.split(','),placeholder)
         else: # QP
-            self.new_region(edit, self.quickcompletions,2,placeholder,rlist.split(','),insert)
+            self.new_region(edit, self.quickcompletions,2,rlist.split(','),placeholder)
 
     # used to parse snippets to extract the string that will be printed out
     # ex. ${0:snippet}
     #           ^
     # The method finds the word snippet and returns it to be inserted into the view
     def extract_regions(self,edit,view,word):
+        placeholder = ''
         if word.startswith('$'):
-            overlap = word[4:].find('{')
-            if overlap > 0 and not '\\' in word[overlap:overlap+1]: # means there is an overlapping region.
-                start = overlap + 5
-                end = word[4:].find(':')+4
-                self.add_word_to_globals(edit,view,word,start,end,False)
-            else:
-                start = word.find(':')+1
-                end = word.find('}')
-            placeholder = word[start:end]
+            if len(word) > 2:
+                overlap = word[4:].find('{')
+                if overlap > 0 and not '\\' in word[overlap:overlap+1]: # means there is an overlapping region.
+                    start = overlap + 5
+                    end = word[4:].find(':')+4
+                    self.add_word_to_globals(edit,view,word,start,end,False)
+                else:
+                    start = word.find(':')+1
+                    end = word.find('}')
+                placeholder = word[start:end]
             ts_index = int(re.search('\d{1,2}',word).group())
             if ts_index == 0:
                 ts_index = 100
             ts_index -= 100 * self.active_snips
-            # ts_region = sublime.Region(self.pos,self.pos+len(placeholder))
-            self.new_region(edit,self.ts_order,0,placeholder,ts_index)
+            self.new_region(edit,self.ts_order,0,ts_index,placeholder)
         else:
             start = word.find('{')+1
             end = word.find(':')

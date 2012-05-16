@@ -1,3 +1,9 @@
+'''
+SMART Snippets
+Licensed under MIT
+Copyright (c) 2012 William Cain
+'''
+
 import os
 import sublime
 import sublime_plugin
