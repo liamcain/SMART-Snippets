@@ -30,7 +30,7 @@ SMART Snippets is meant to be the missing link between the average user and the 
 - `${0:placeholder}`: Tabstops w/ Placeholder text.  Again taken from the default snippet behavior, pressing tab will select the placeholder text in the next sequential tabstop
 - `QP{placeholder:[options]}`: A Quick Panel region.  When the placeholder text is selected in the view, a quick panel will dropdown with a list of options.  Selecting the option will replace the placeholder text with the given option.  *Note* Quickpanel options can include python code when given the following syntax: text\tCODE.  So SMART Snippets will execute anything after \t.
 - `AC{placeholder:[options]}`: An Autocomplete Region.  Similar to the QP Region, this region will display a list of options in the autocompletion panel.
-- `` ```python code``` ``: Run python code directly within a snippet.  Insert your own raw python code or take use of SMART Snippets awesome custom syntax.  That's right.  SMART Snippets tries to make your python even easier by adding custom functions, syntax variants, and more.
+- `(triple backtick) python code (triple backtick)`: Run python code directly within a snippet.  Insert your own raw python code or take use of SMART Snippets awesome custom syntax.  That's right.  SMART Snippets tries to make your python even easier by adding custom functions, syntax variants, and more.
 
 SMART Snippet's Custom Syntax
 =============================
