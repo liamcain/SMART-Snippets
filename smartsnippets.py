@@ -9,7 +9,6 @@ import sublime_plugin
 import os.path
 import re
 import _snippetloader as SS
-# import smart_utils as u
 
 if not 'SS.snip_files' in vars():  # for testing only, to remove dups
     SS.init_snipfiles()
