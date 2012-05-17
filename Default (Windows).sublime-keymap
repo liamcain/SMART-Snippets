@@ -1,0 +1,11 @@
+[{
+	"keys": ["ctrl+d"],
+	"command": "expand_selection_to_qc_region",
+	"context":
+	[
+		{ "key": "inside_qc_region",
+		 "operator": "equal",
+		 "operand": true,
+		 "match_all": true }
+	]
+}]
